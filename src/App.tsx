@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 
-import StudentSection from './components/Estudiantes';
-import TeacherSection from './components/Docentes';
-import AdminSection from './components/Administrador';
+import Estudiantes from './components/Estudiantes';
+import Docentes from './components/Docentes';
+import Administrador from './components/Administrador';
 
 function App() {
   const [activeTab, setActiveTab] = useState('student');
@@ -70,9 +70,9 @@ function App() {
 
       {/* Main Content */}
       <main className="flex-grow container mx-auto px-4 py-8">
-        {activeTab === 'student' && <StudentSection />}
-        {activeTab === 'teacher' && <TeacherSection />}
-        {activeTab === 'admin' && <AdminSection />}
+        {activeTab === 'student' && <Estudiantes />}
+        {activeTab === 'teacher' && <Docentes />}
+        {activeTab === 'admin' && <Administrador />}
       </main>
 
       {/* Footer */}
