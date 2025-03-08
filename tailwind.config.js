@@ -5,4 +5,4 @@ export default {
     extend: {},
   },
   plugins: [],
-};
+};// Example: tailwind.config.js
