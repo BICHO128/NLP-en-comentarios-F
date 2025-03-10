@@ -1,38 +1,107 @@
 import { useState } from 'react';
-import { Bar } from 'react-chartjs-2';
+import { Line, Pie, Doughnut } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
-  BarElement,
+  PointElement,
+  LineElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  ArcElement,
 } from 'chart.js';
 
 ChartJS.register(
   CategoryScale,
   LinearScale,
-  BarElement,
+  PointElement,
+  LineElement,
+  ArcElement,
   Title,
   Tooltip,
   Legend
 );
 
-const TeacherSection = () => {
-  const [selectedFilter, setSelectedFilter] = useState('all');
+const Docentes = () => {
+  const [selectedCommentType, setSelectedCommentType] = useState('all');
 
-  // Sample data for the chart
-  const chartData = {
+  // Data for the top three charts
+  const lineChartData1 = {
+    labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
+    datasets: [
+      {
+        label: 'Satisfacción General',
+        data: [65, 75, 70, 80, 75, 85],
+        fill: true,
+        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+        borderColor: 'rgba(255, 99, 132, 1)',
+        tension: 0.4,
+      },
+    ],
+  };
+
+  const lineChartData2 = {
+    labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
+    datasets: [
+      {
+        label: 'Participación Estudiantil',
+        data: [40, 60, 55, 75, 65, 70],
+        fill: true,
+        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+        borderColor: 'rgba(54, 162, 235, 1)',
+        tension: 0.4,
+      },
+    ],
+  };
+
+  const lineChartData3 = {
+    labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
+    datasets: [
+      {
+        label: 'Calidad del Material',
+        data: [55, 65, 60, 70, 75, 80],
+        fill: true,
+        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+        borderColor: 'rgba(75, 192, 192, 1)',
+        tension: 0.4,
+      },
+    ],
+  };
+
+  // Data for the aspects pie chart
+  const pieChartData = {
+    labels: ['Metodología', 'Comunicación', 'Material', 'Puntualidad'],
+    datasets: [
+      {
+        data: [40, 25, 20, 15],
+        backgroundColor: [
+          'rgba(255, 99, 132, 0.8)',
+          'rgba(54, 162, 235, 0.8)',
+          'rgba(75, 192, 192, 0.8)',
+          'rgba(153, 102, 255, 0.8)',
+        ],
+        borderColor: [
+          'rgba(255, 99, 132, 1)',
+          'rgba(54, 162, 235, 1)',
+          'rgba(75, 192, 192, 1)',
+          'rgba(153, 102, 255, 1)',
+        ],
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  // Data for the comments distribution donut chart
+  const commentsDistributionData = {
     labels: ['Positivos', 'Neutrales', 'Negativos'],
     datasets: [
       {
-        label: 'Porcentaje de Comentarios',
         data: [65, 25, 10],
         backgroundColor: [
-          'rgba(34, 197, 94, 0.5)',
-          'rgba(234, 179, 8, 0.5)',
-          'rgba(239, 68, 68, 0.5)',
+          'rgba(34, 197, 94, 0.8)',
+          'rgba(234, 179, 8, 0.8)',
+          'rgba(239, 68, 68, 0.8)',
         ],
         borderColor: [
           'rgb(34, 197, 94)',
@@ -44,100 +113,136 @@ const TeacherSection = () => {
     ],
   };
 
+  // Data for the progress bars
+  const progressData = [
+    { label: 'Satisfacción General', value: 85, color: 'bg-blue-500' },
+    { label: 'Participación', value: 70, color: 'bg-green-500' },
+    { label: 'Material Didáctico', value: 90, color: 'bg-purple-500' },
+  ];
+
   const chartOptions = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: {
-        position: 'top' as const,
-      },
-      title: {
-        display: true,
-        text: 'Distribución de Comentarios',
+        display: false,
       },
     },
     scales: {
       y: {
         beginAtZero: true,
         max: 100,
-        ticks: {
-          callback: function (tickValue: string | number) {
-            return `${tickValue}%`;
-          },
-        },
       },
     },
   };
 
+  const pieOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'right' as const,
+      },
+    },
+  };
+
+  const donutOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'bottom' as const,
+      },
+    },
+    cutout: '70%',
+  };
+
   // Sample comments data
-  const comments = {
+  const allComments = {
     positive: [
-      "Excelente metodología de enseñanza y muy buena disposición para resolver dudas.",
-      "Las clases son muy dinámicas y se nota la preparación del material.",
+      { text: "Excelente metodología y material didáctico", date: "15/03/2024" },
+      { text: "Las explicaciones son muy claras y precisas", date: "14/03/2024" },
     ],
     neutral: [
-      "El contenido es bueno pero a veces va muy rápido.",
-      "Las clases son interesantes aunque algunos temas son complejos.",
+      { text: "Buena comunicación pero el ritmo es algo rápido", date: "14/03/2024" },
+      { text: "El contenido es bueno pero algunos temas son complejos", date: "13/03/2024" },
     ],
     negative: [
-      "Falta más ejemplos prácticos en clase.",
-      "La comunicación podría mejorar.",
+      { text: "Se necesitan más ejemplos prácticos", date: "13/03/2024" },
+      { text: "La comunicación podría mejorar en algunos aspectos", date: "12/03/2024" },
     ],
   };
 
+  const getFilteredComments = () => {
+    if (selectedCommentType === 'all') {
+      return [
+        ...allComments.positive.map(c => ({ ...c, type: 'positive' })),
+        ...allComments.neutral.map(c => ({ ...c, type: 'neutral' })),
+        ...allComments.negative.map(c => ({ ...c, type: 'negative' })),
+      ];
+    }
+    return allComments[selectedCommentType as keyof typeof allComments].map(c => ({
+      ...c,
+      type: selectedCommentType,
+    }));
+  };
+
   return (
-    <div className="space-y-8">
-      {/* Statistics Chart */}
-      <section className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-xl font-semibold mb-6">Estadísticas de Comentarios</h2>
-        <div className="h-[400px]">
-          <Bar data={chartData} options={chartOptions} />
-        </div>
-      </section>
+    <div className="grid grid-cols-12 gap-6 p-6 bg-gray-100">
+      {/* Top row - Three line charts */}
+      <div className="col-span-4 bg-white rounded-lg shadow p-4 h-[200px]">
+        <h3 className="text-lg font-semibold mb-2">Satisfacción General</h3>
+        <Line data={lineChartData1} options={chartOptions} />
+      </div>
+      <div className="col-span-4 bg-white rounded-lg shadow p-4 h-[200px]">
+        <h3 className="text-lg font-semibold mb-2">Participación Estudiantil</h3>
+        <Line data={lineChartData2} options={chartOptions} />
+      </div>
+      <div className="col-span-4 bg-white rounded-lg shadow p-4 h-[200px]">
+        <h3 className="text-lg font-semibold mb-2">Calidad del Material</h3>
+        <Line data={lineChartData3} options={chartOptions} />
+      </div>
 
-      {/* Relevant Comments */}
-      <section className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-xl font-semibold mb-6">Comentarios Relevantes</h2>
-        <div className="space-y-6">
-          <div>
-            <h3 className="text-lg font-medium text-green-600 mb-3">Comentarios Positivos</h3>
-            <div className="space-y-2">
-              {comments.positive.map((comment, index) => (
-                <div key={index} className="p-3 bg-green-50 rounded-md border border-green-100">
-                  <p className="text-gray-700">{comment}</p>
-                </div>
-              ))}
+      {/* Middle row - Pie chart and progress bars */}
+      <div className="col-span-6 bg-white rounded-lg shadow p-4 h-[300px]">
+        <h3 className="text-lg font-semibold mb-2">Distribución de Aspectos Evaluados</h3>
+        <Pie data={pieChartData} options={pieOptions} />
+      </div>
+      <div className="col-span-6 bg-white rounded-lg shadow p-4">
+        <h3 className="text-lg font-semibold mb-4">Indicadores de Desempeño</h3>
+        <div className="space-y-4">
+          {progressData.map((item, index) => (
+            <div key={index}>
+              <div className="flex justify-between mb-1">
+                <span className="text-sm font-medium">{item.label}</span>
+                <span className="text-sm font-medium">{item.value}%</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2.5">
+                <div
+                  className={`${item.color} h-2.5 rounded-full`}
+                  style={{ width: `${item.value}%` }}
+                ></div>
+              </div>
             </div>
-          </div>
-          <div>
-            <h3 className="text-lg font-medium text-yellow-600 mb-3">Comentarios Neutrales</h3>
-            <div className="space-y-2">
-              {comments.neutral.map((comment, index) => (
-                <div key={index} className="p-3 bg-yellow-50 rounded-md border border-yellow-100">
-                  <p className="text-gray-700">{comment}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div>
-            <h3 className="text-lg font-medium text-red-600 mb-3">Comentarios Negativos</h3>
-            <div className="space-y-2">
-              {comments.negative.map((comment, index) => (
-                <div key={index} className="p-3 bg-red-50 rounded-md border border-red-100">
-                  <p className="text-gray-700">{comment}</p>
-                </div>
-              ))}
-            </div>
-          </div>
+          ))}
         </div>
-      </section>
+      </div>
 
-      {/* All Comments */}
-      <section className="bg-white rounded-lg shadow-md p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold">Todos los Comentarios</h2>
+      {/* Bottom row - Comments distribution and filtered comments */}
+      <div className="col-span-6 bg-white rounded-lg shadow p-4">
+        <h3 className="text-lg font-semibold mb-4">Distribución de Comentarios</h3>
+        <div className="h-[300px] flex items-center justify-center">
+          <Doughnut data={commentsDistributionData} options={donutOptions} />
+        </div>
+      </div>
+
+      {/* Comments section with filter */}
+      <div className="col-span-6 bg-white rounded-lg shadow p-4">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold">Comentarios</h3>
           <select
-            value={selectedFilter}
-            onChange={(e) => setSelectedFilter(e.target.value)}
+            value={selectedCommentType}
+            onChange={(e) => setSelectedCommentType(e.target.value)}
             className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
           >
             <option value="all">Todos</option>
@@ -146,44 +251,38 @@ const TeacherSection = () => {
             <option value="negative">Negativos</option>
           </select>
         </div>
-        <div className="space-y-4">
-          {/* Here you would map through all comments based on the selected filter */}
-          <div className="p-4 border rounded-md">
-            <p className="text-gray-700">
-              "Excelente metodología de enseñanza y muy buena disposición para resolver dudas."
-            </p>
-            <div className="mt-2 flex items-center">
-              <span className="text-sm text-gray-500">Fecha: 15/03/2024</span>
-              <span className="mx-2 text-gray-300">|</span>
-              <span className="text-sm font-medium text-green-600">Positivo</span>
+        <div className="space-y-3 max-h-[300px] overflow-y-auto">
+          {getFilteredComments().map((comment, index) => (
+            <div
+              key={index}
+              className={`p-3 rounded-lg ${
+                comment.type === 'positive'
+                  ? 'bg-green-50 border border-green-200'
+                  : comment.type === 'neutral'
+                  ? 'bg-yellow-50 border border-yellow-200'
+                  : 'bg-red-50 border border-red-200'
+              }`}
+            >
+              <p className="text-gray-800">{comment.text}</p>
+              <div className="mt-2 flex items-center">
+                <span className="text-sm text-gray-500">{comment.date}</span>
+                <span className="mx-2 text-gray-300">|</span>
+                <span className={`text-sm font-medium ${
+                  comment.type === 'positive'
+                    ? 'text-green-600'
+                    : comment.type === 'neutral'
+                    ? 'text-yellow-600'
+                    : 'text-red-600'
+                }`}>
+                  {comment.type === 'positive' ? 'Positivo' : comment.type === 'neutral' ? 'Neutral' : 'Negativo'}
+                </span>
+              </div>
             </div>
-          </div>
-          {/* Add more comments here */}
-          <div className="p-4 border rounded-md">
-            <p className="text-gray-700">
-              "El contenido es bueno, pero a veces va muy rápido. Las clases son interesantes aunque algunos temas son complejos."
-            </p>
-            <div className="mt-2 flex items-center">
-              <span className="text-sm text-gray-500">Fecha: 15/03/2024</span>
-              <span className="mx-2 text-gray-300">|</span>
-              <span className="text-sm font-medium text-yellow-600">Neutral</span>
-            </div>
-          </div>
-
-          <div className="p-4 border rounded-md">
-            <p className="text-gray-700">
-              "La comunicación del docente podría mejorar. Falta más interacción con los estudiantes y algunos temas son difíciles de entender debido a la falta de ejemplos prácticos en clase."
-            </p>
-            <div className="mt-2 flex items-center">
-              <span className="text-sm text-gray-500">Fecha: 15/03/2024</span>
-              <span className="mx-2 text-gray-300">|</span>
-              <span className="text-sm font-medium text-red-600">Negativo</span>
-            </div>
-          </div>
+          ))}
         </div>
-      </section>
+      </div>
     </div>
   );
 };
 
-export default TeacherSection;
+export default Docentes;
