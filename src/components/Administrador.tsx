@@ -1,50 +1,53 @@
-import React, { useState } from 'react';
-import { Doughnut, Line } from 'react-chartjs-2';
+import React, { useState } from 'react'; // Importa React y el hook useState
+import { Doughnut, Line } from 'react-chartjs-2'; // Importa los componentes Doughnut y Line de react-chartjs-2
+// Importamos varios componentes del paquete 'chart.js' que nos permitirán crear diferentes tipos de gráficos en nuestra aplicación React.
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  ArcElement,
-} from 'chart.js';
-import { FileDown } from 'lucide-react';
-import jsPDF from 'jspdf';
+  Chart as ChartJS, // Importamos la clase principal 'Chart' de 'chart.js', que es la base para crear gráficos.
+  CategoryScale, // Importamos 'CategoryScale', que se utiliza para definir escalas categóricas en los gráficos.
+  LinearScale, // Importamos 'LinearScale', que se utiliza para definir escalas lineales en los gráficos.
+  PointElement, // Importamos 'PointElement', que se utiliza para representar puntos en gráficos de líneas y dispersión.
+  LineElement, // Importamos 'LineElement', que se utiliza para dibujar líneas en gráficos de líneas.
+  BarElement, // Importamos 'BarElement', que se utiliza para dibujar barras en gráficos de barras.
+  Title, // Importamos 'Title', que se utiliza para agregar títulos a los gráficos.
+  Tooltip, // Importamos 'Tooltip', que se utiliza para mostrar información adicional cuando el usuario pasa el cursor sobre los elementos del gráfico.
+  Legend, // Importamos 'Legend', que se utiliza para mostrar una leyenda que explica los diferentes elementos del gráfico.
+  ArcElement, // Importamos 'ArcElement', que se utiliza para dibujar arcos en gráficos de tipo pastel o anillo.
+} from 'chart.js'; // Importa varios elementos de chart.js
+import { FileDown } from 'lucide-react'; // Importa el icono FileDown de lucide-react
+import jsPDF from 'jspdf'; // Importa la librería jsPDF
 
+// Registra los componentes de chart.js
 ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend
+  CategoryScale, // Escala de categorías para el eje X
+  LinearScale, // Escala lineal para el eje Y
+  PointElement, // Elemento de punto para gráficos de línea
+  LineElement, // Elemento de línea para gráficos de línea
+  BarElement, // Elemento de barra para gráficos de barras
+  ArcElement, // Elemento de arco para gráficos de pastel y donut
+  Title, // Título del gráfico
+  Tooltip, // Tooltip para mostrar información al pasar el ratón
+  Legend // Leyenda del gráfico
 );
 
 const Administrador = () => {
-  const [selectedTeacher, setSelectedTeacher] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCommentType, setSelectedCommentType] = useState('all');
+  // Define los estados locales
+  const [selectedTeacher, setSelectedTeacher] = useState(''); // Estado para el docente seleccionado
+  const [searchTerm, setSearchTerm] = useState(''); // Estado para el término de búsqueda
+  const [selectedCommentType, setSelectedCommentType] = useState('all'); // Estado para el tipo de comentario seleccionado
 
-  // Sample teachers data
+  // Datos de ejemplo de docentes
   const teachers = [
     'ANA MARIA CAVIEDES CASTILLO',
     'MANUEL OBANDO',
     'FERNANDO CONCHA',
   ];
 
-  // Filtered teachers based on search term
+  // Filtra los docentes según el término de búsqueda
   const filteredTeachers = teachers.filter((teacher) =>
     teacher.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Data for the line charts
+  // Datos para los gráficos de líneas
   const lineChartData1 = {
     labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
     datasets: [
@@ -87,7 +90,7 @@ const Administrador = () => {
     ],
   };
 
-  // Data for the pie chart
+  // Datos para el gráfico de pastel
   const pieChartData = {
     labels: ['Metodología', 'Comunicación', 'Material', 'Puntualidad'],
     datasets: [
@@ -110,7 +113,7 @@ const Administrador = () => {
     ],
   };
 
-  // Data for the comments distribution chart
+  // Datos para el gráfico de distribución de comentarios
   const commentsDistributionData = {
     labels: ['Positivos', 'Neutrales', 'Negativos'],
     datasets: [
@@ -131,8 +134,7 @@ const Administrador = () => {
     ],
   };
 
-
-  // Sample comments data
+  // Datos de ejemplo de comentarios
   const allComments = {
     positive: [
       { text: "Excelente metodología de enseñanza, las clases son muy dinámicas y el material es muy completo.", frequency: "Alta" },
@@ -148,6 +150,7 @@ const Administrador = () => {
     ],
   };
 
+  // Filtra los comentarios según el tipo seleccionado
   const getFilteredComments = () => {
     if (selectedCommentType === 'all') {
       return [
@@ -162,6 +165,7 @@ const Administrador = () => {
     }));
   };
 
+  // Opciones para los gráficos
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -199,19 +203,19 @@ const Administrador = () => {
     cutout: '70%',
   };
 
+  // Maneja el evento de presionar una tecla en el campo de búsqueda
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && filteredTeachers.length > 0) {
       setSelectedTeacher(filteredTeachers[0]);
     }
   };
 
-
-
+  // Genera un informe PDF
   const generatePDFReport = () => {
-    const pdf = new jsPDF();
-    let yPos = 20;
+    const pdf = new jsPDF(); // Crea una nueva instancia de jsPDF
+    let yPos = 20; // Posición vertical inicial
 
-    // Title
+    // Título
     pdf.setFontSize(16);
     pdf.text('Informe de Evaluación Docente', 20, yPos);
     yPos += 10;
@@ -220,7 +224,7 @@ const Administrador = () => {
     pdf.text(`Docente: ${selectedTeacher}`, 20, yPos);
     yPos += 20;
 
-    // Summary
+    // Resumen
     pdf.setFontSize(12);
     pdf.text('Resumen:', 20, yPos);
     yPos += 10;
@@ -237,7 +241,7 @@ const Administrador = () => {
     });
     yPos += 10;
 
-    // Strengths
+    // Puntos fuertes
     pdf.text('Puntos Fuertes:', 20, yPos);
     yPos += 10;
 
@@ -253,7 +257,7 @@ const Administrador = () => {
     });
     yPos += 10;
 
-    // Areas for Improvement
+    // Áreas de mejora
     pdf.text('Áreas de Mejora:', 20, yPos);
     yPos += 10;
 
@@ -269,7 +273,7 @@ const Administrador = () => {
     });
     yPos += 10;
 
-    // Conclusions
+    // Conclusiones
     pdf.text('Conclusiones:', 20, yPos);
     yPos += 10;
 
@@ -284,7 +288,7 @@ const Administrador = () => {
       yPos += 7;
     });
 
-    // Add charts
+    // Añade gráficos al PDF
     const charts = document.querySelectorAll('canvas');
     charts.forEach((canvas) => {
       if (yPos > 250) {
@@ -296,12 +300,12 @@ const Administrador = () => {
       yPos += 90;
     });
 
-    pdf.save(`informe-${selectedTeacher}.pdf`);
+    pdf.save(`informe-${selectedTeacher}.pdf`); // Guarda el PDF con el nombre del docente seleccionado
   };
 
   return (
     <div className="space-y-8">
-      {/* Titulo */}
+      {/* Título */}
       <div className="text-center">
         <h1 className="text-2xl font-bold">ESTADÍSTICAS DE LA AUTOEVALUACIÓN AL DOCENTE</h1>
         <h2 className="text-lg font-semibold text-gray-500">
@@ -309,7 +313,7 @@ const Administrador = () => {
         </h2>
       </div>
 
-      {/* Teacher Selection */}
+      {/* Selección de docente */}
       <section className="bg-white rounded-lg shadow-md p-6">
         <h2 className="text-xl font-semibold mb-4">Docentes Matriculados</h2>
         <input
@@ -342,7 +346,7 @@ const Administrador = () => {
 
       {selectedTeacher && (
         <>
-          {/* Download Report Button */}
+          {/* Botón para descargar el informe */}
           <div className="flex justify-end">
             <button
               onClick={generatePDFReport}
@@ -353,9 +357,9 @@ const Administrador = () => {
             </button>
           </div>
 
-          {/* Dashboard Grid */}
+          {/* Cuadro de mando */}
           <div className="grid grid-cols-12 gap-6">
-            {/* Top row - Three line charts */}
+            {/* Fila superior - Tres gráficos de líneas */}
             <div className="col-span-4 bg-white rounded-lg shadow p-4 h-[200px]">
               <h3 className="text-lg font-semibold mb-2">Satisfacción General</h3>
               <Line data={lineChartData1} options={chartOptions} id="satisfaction-chart" />
@@ -369,7 +373,7 @@ const Administrador = () => {
               <Line data={lineChartData3} options={chartOptions} id="quality-chart" />
             </div>
 
-            {/* Middle row - Pie charts */}
+            {/* Fila del medio - Gráficos de pastel */}
             <div className="col-span-6 bg-white rounded-lg shadow p-4 h-[300px]">
               <h3 className="text-lg font-semibold mb-2">Distribución de Aspectos Evaluados</h3>
               <Doughnut data={pieChartData} options={pieOptions} id="aspects-chart" />
@@ -379,7 +383,7 @@ const Administrador = () => {
               <Doughnut data={commentsDistributionData} options={donutOptions} id="comments-distribution-chart" />
             </div>
 
-            {/* Comments section with filter */}
+            {/* Sección de comentarios con filtro */}
             <div className="col-span-12 bg-white rounded-lg shadow p-4">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold">Comentarios</h3>
@@ -431,4 +435,4 @@ const Administrador = () => {
   );
 };
 
-export default Administrador;
+export default Administrador; // Exporta el componente Administrador
