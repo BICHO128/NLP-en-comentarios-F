@@ -76,7 +76,7 @@ const LoginPage = () => {
             <div className="mb-6 md:mb-0 md:w-1/2">
               <div className="flex items-center space-x-2 mb-4">
                 <img 
-                  src="/public/imagenes/logo_autonoma.png" 
+                  src="/imagenes/logo_autonoma.png" 
                   alt="Logo Uniautonoma" 
                   className="h-12"
                 />

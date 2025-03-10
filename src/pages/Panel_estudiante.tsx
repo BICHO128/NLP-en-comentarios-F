@@ -17,7 +17,7 @@ const StudentDashboard = () => {
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-2">
             <img 
-              src="/public/imagenes/logo_autonoma.png" 
+              src="/imagenes/logo_autonoma.png" 
               alt="Logo Uniautonoma" 
               className="h-20"
             />
@@ -29,7 +29,7 @@ const StudentDashboard = () => {
               className="justify-center"
             >
               <img 
-                src="/public/imagenes/perfil.png" 
+                src="/imagenes/perfil.png" 
                 alt="Perfil" 
                 className="h-14 w-14 rounded-full"
               />
@@ -64,7 +64,7 @@ const StudentDashboard = () => {
             <div className="mb-6 md:mb-0 md:w-1/2">
               <div className="flex items-center space-x-2 mb-4">
                 <img 
-                  src="/public/imagenes/logo_autonoma.png" 
+                  src="/imagenes/logo_autonoma.png" 
                   alt="Logo Uniautonoma" 
                   className="h-12"
                 />
