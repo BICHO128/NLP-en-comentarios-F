@@ -28,7 +28,7 @@ const LoginPage = () => {
       {/* Login Form */}
       <div className="flex-grow flex items-center justify-center px-4">
         <div className="bg-white bg-opacity-20 p-8 rounded-lg shadow-lg w-full max-w-md">
-          <h2 className="text-2xl font-bold text-center mb-6">Inicio de Sesión</h2>
+          <h2 className="text-2xl font-bold text-center mb-6">Inicio de Sesion</h2>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-gray-800 mb-1">
