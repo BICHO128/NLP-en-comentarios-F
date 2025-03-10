@@ -3,7 +3,8 @@ import { FileUp, Send } from 'lucide-react';
 
 const StudentSection = () => {
   const [comment, setComment] = useState('');
-  const [selectedTeacher] = useState('ANA MARIA CAVIEDES CASTILLO');
+  const [teachers] = useState(['ANA MARIA CAVIEDES CASTILLO', 'MANUEL OBANDO', 'FERNANDO CONCHA']);
+  const [selectedTeacher, setSelectedTeacher] = useState(teachers[0]);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -47,8 +48,18 @@ const StudentSection = () => {
         <h2 className="text-xl font-semibold text-center mb-4">Docentes Matriculados</h2>
         <div className="border rounded-md p-4">
           <div className="flex items-center justify-between">
-            <span className="font-medium">{selectedTeacher}</span>
-            <span className="text-sm text-gray-500">Docente Activo</span>
+            <select
+              value={selectedTeacher}
+              onChange={(e) => setSelectedTeacher(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            >
+              {teachers.map((teacher) => (
+                <option key={teacher} value={teacher}>
+                  {teacher}
+                </option>
+              ))}
+            </select>
+            {/* <span className="text-sm text-gray-500">Docente Activo</span> */}
           </div>
         </div>
       </section>
