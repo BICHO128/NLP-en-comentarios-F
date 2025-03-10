@@ -18,7 +18,7 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundImage: "url('/public/imagenes/corporaci-n-universitaria-aut-noma-del-cauca-000682_large.jpg')", backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}>
+    <div className="min-h-screen flex flex-col" style={{ backgroundImage: "url('/imagenes/fondo_login.jpg')", backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}>
       {/* Header */}
       <header className="py-4 bg-transparent"><div className="container mx-auto px-4 flex justify-between items-center">
         {/* Header content */}
