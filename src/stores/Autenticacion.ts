@@ -2,9 +2,15 @@ import { create } from 'zustand';
 
 type UserRole = 'student' | 'teacher' | 'admin';
 
+interface User {
+  username: string;
+  role: UserRole;
+}
+
 interface AuthState {
   isAuthenticated: boolean;
   userRole: UserRole | null;
+  user: User | null;
   login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
 }
@@ -19,6 +25,7 @@ const mockUsers = {
 export const useAuthStore = create<AuthState>((set) => ({
   isAuthenticated: false,
   userRole: null,
+  user: null,
   login: async (username: string, password: string) => {
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 500));
@@ -28,7 +35,8 @@ export const useAuthStore = create<AuthState>((set) => ({
     if (user && user.password === password) {
       set({ 
         isAuthenticated: true, 
-        userRole: user.role as UserRole 
+        userRole: user.role as UserRole,
+        user: { username, role: user.role as UserRole }
       });
       return true;
     }
@@ -38,7 +46,8 @@ export const useAuthStore = create<AuthState>((set) => ({
   logout: () => {
     set({ 
       isAuthenticated: false, 
-      userRole: null 
+      userRole: null,
+      user: null
     });
   },
 }));

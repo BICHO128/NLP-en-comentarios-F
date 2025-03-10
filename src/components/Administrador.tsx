@@ -27,14 +27,20 @@ ChartJS.register(
 );
 
 const AdminSection = () => {
-  const [selectedTeacher, setSelectedTeacher] = useState('ANA MARIA CAVIEDES CASTILLO');
-  
+  const [selectedTeacher, setSelectedTeacher] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+
   // Sample teachers data
   const teachers = [
     'ANA MARIA CAVIEDES CASTILLO',
-    'JUAN CARLOS MARTINEZ',
-    'MARIA FERNANDA LOPEZ',
+    'MANUEL OBANDO',
+    'FERNANDO CONCHA',
   ];
+
+  // Filtered teachers based on search term
+  const filteredTeachers = teachers.filter((teacher) =>
+    teacher.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   // Sample data for charts
   const barChartData = {
@@ -139,135 +145,162 @@ const AdminSection = () => {
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && filteredTeachers.length > 0) {
+      setSelectedTeacher(filteredTeachers[0]);
+    }
+  };
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-1">
+      {/* Titulo */}
+      <h1 className="text-2xl font-bold text-center">ESTADÍSTICAS DE LA AUTOEVALUACIÓN AL DOCENTE</h1>
+      {/* Subtitulo */}
+      <h2 className="text-lg font-semibold text-center text-gray-500">
+        realizado por los estudiantes
+      </h2>
+
       {/* Teacher Selection */}
       <section className="bg-white rounded-lg shadow-md p-6">
         <h2 className="text-xl font-semibold mb-4">Docentes Matriculados</h2>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {teachers.map((teacher) => (
-            <button
-              key={teacher}
-              onClick={() => setSelectedTeacher(teacher)}
-              className={`p-4 rounded-lg border transition-all ${
-                selectedTeacher === teacher
-                  ? 'border-blue-500 bg-blue-50'
-                  : 'border-gray-200 hover:border-blue-300'
-              }`}
-            >
-              <h3 className="font-medium">{teacher}</h3>
-              <p className="text-sm text-gray-500 mt-1">Ver estadísticas</p>
-            </button>
-          ))}
-        </div>
+        <input
+          type="text"
+          placeholder="Buscar docente..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          onKeyDown={handleKeyDown}
+          className="mb-4 p-2 border rounded-lg w-full"
+        />
+        {searchTerm && (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {filteredTeachers.map((teacher) => (
+              <button
+                key={teacher}
+                onClick={() => setSelectedTeacher(teacher)}
+                className={`p-4 rounded-lg border transition-all ${
+                  selectedTeacher === teacher
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-gray-200 hover:border-blue-300'
+                }`}
+              >
+                <h3 className="font-medium">{teacher}</h3>
+                <p className="text-sm text-gray-500 mt-1">Ver estadísticas</p>
+              </button>
+            ))}
+          </div>
+        )}
       </section>
 
-      {/* Distribution Chart */}
-      <section className="bg-white rounded-lg shadow-md p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold">Distribución de Comentarios</h2>
-          <div className="flex space-x-2">
-            <button
-              onClick={() => handleDownload('distribution-chart')}
-              className="p-2 text-gray-600 hover:text-gray-900"
-              title="Descargar gráfica"
-            >
-              <Download className="h-5 w-5" />
-            </button>
-            <button
-              onClick={() => handleFullscreen('distribution-chart')}
-              className="p-2 text-gray-600 hover:text-gray-900"
-              title="Ver en pantalla completa"
-            >
-              <Maximize2 className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
-        <div id="distribution-chart-container" className="h-[400px]">
-          <Bar id="distribution-chart" data={barChartData} options={chartOptions} />
-        </div>
-      </section>
-
-      {/* Categories Distribution */}
-      <section className="bg-white rounded-lg shadow-md p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold">Distribución por Categorías</h2>
-          <div className="flex space-x-2">
-            <button
-              onClick={() => handleDownload('categories-chart')}
-              className="p-2 text-gray-600 hover:text-gray-900"
-              title="Descargar gráfica"
-            >
-              <Download className="h-5 w-5" />
-            </button>
-            <button
-              onClick={() => handleFullscreen('categories-chart')}
-              className="p-2 text-gray-600 hover:text-gray-900"
-              title="Ver en pantalla completa"
-            >
-              <Maximize2 className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
-        <div id="categories-chart-container" className="h-[400px] flex justify-center">
-          <div className="w-2/3">
-            <Doughnut id="categories-chart" data={doughnutData} />
-          </div>
-        </div>
-      </section>
-
-      {/* Satisfaction Trend */}
-      <section className="bg-white rounded-lg shadow-md p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold">Tendencia de Satisfacción</h2>
-          <div className="flex space-x-2">
-            <button
-              onClick={() => handleDownload('trend-chart')}
-              className="p-2 text-gray-600 hover:text-gray-900"
-              title="Descargar gráfica"
-            >
-              <Download className="h-5 w-5" />
-            </button>
-            <button
-              onClick={() => handleFullscreen('trend-chart')}
-              className="p-2 text-gray-600 hover:text-gray-900"
-              title="Ver en pantalla completa"
-            >
-              <Maximize2 className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
-        <div id="trend-chart-container" className="h-[400px]">
-          <Line id="trend-chart" data={lineChartData} options={chartOptions} />
-        </div>
-      </section>
-
-      {/* Trending Comments */}
-      <section className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-xl font-semibold mb-6">Comentarios Tendencia</h2>
-        <div className="space-y-4">
-          <div className="p-4 border rounded-md bg-green-50">
-            <p className="text-gray-700">
-              "Excelente metodología de enseñanza, las clases son muy dinámicas y el material es muy completo."
-            </p>
-            <div className="mt-2 flex items-center">
-              <span className="text-sm text-gray-500">Frecuencia: Alta</span>
-              <span className="mx-2 text-gray-300">|</span>
-              <span className="text-sm font-medium text-green-600">Positivo</span>
+      {selectedTeacher && (
+        <>
+          {/* Distribution Chart */}
+          <section className="bg-white rounded-lg shadow-md p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-semibold">Distribución de Comentarios</h2>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => handleDownload('distribution-chart')}
+                  className="p-2 text-gray-600 hover:text-gray-900"
+                  title="Descargar gráfica"
+                >
+                  <Download className="h-5 w-5" />
+                </button>
+                <button
+                  onClick={() => handleFullscreen('distribution-chart')}
+                  className="p-2 text-gray-600 hover:text-gray-900"
+                  title="Ver en pantalla completa"
+                >
+                  <Maximize2 className="h-5 w-5" />
+                </button>
+              </div>
             </div>
-          </div>
-          <div className="p-4 border rounded-md bg-yellow-50">
-            <p className="text-gray-700">
-              "El contenido es bueno pero algunos temas requieren más tiempo de explicación."
-            </p>
-            <div className="mt-2 flex items-center">
-              <span className="text-sm text-gray-500">Frecuencia: Media</span>
-              <span className="mx-2 text-gray-300">|</span>
-              <span className="text-sm font-medium text-yellow-600">Neutral</span>
+            <div id="distribution-chart-container" className="h-[400px]">
+              <Bar id="distribution-chart" data={barChartData} options={chartOptions} />
             </div>
-          </div>
-        </div>
-      </section>
+          </section>
+
+          {/* Categories Distribution */}
+          <section className="bg-white rounded-lg shadow-md p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-semibold">Distribución por Categorías</h2>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => handleDownload('categories-chart')}
+                  className="p-2 text-gray-600 hover:text-gray-900"
+                  title="Descargar gráfica"
+                >
+                  <Download className="h-5 w-5" />
+                </button>
+                <button
+                  onClick={() => handleFullscreen('categories-chart')}
+                  className="p-2 text-gray-600 hover:text-gray-900"
+                  title="Ver en pantalla completa"
+                >
+                  <Maximize2 className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+            <div id="categories-chart-container" className="h-[400px] flex justify-center">
+              <div className="w-2/3">
+                <Doughnut id="categories-chart" data={doughnutData} />
+              </div>
+            </div>
+          </section>
+
+          {/* Satisfaction Trend */}
+          <section className="bg-white rounded-lg shadow-md p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-semibold">Tendencia de Satisfacción</h2>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => handleDownload('trend-chart')}
+                  className="p-2 text-gray-600 hover:text-gray-900"
+                  title="Descargar gráfica"
+                >
+                  <Download className="h-5 w-5" />
+                </button>
+                <button
+                  onClick={() => handleFullscreen('trend-chart')}
+                  className="p-2 text-gray-600 hover:text-gray-900"
+                  title="Ver en pantalla completa"
+                >
+                  <Maximize2 className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+            <div id="trend-chart-container" className="h-[400px]">
+              <Line id="trend-chart" data={lineChartData} options={chartOptions} />
+            </div>
+          </section>
+
+          {/* Trending Comments */}
+          <section className="bg-white rounded-lg shadow-md p-6">
+            <h2 className="text-xl font-semibold mb-6">Comentarios Tendencia</h2>
+            <div className="space-y-4">
+              <div className="p-4 border rounded-md bg-green-50">
+                <p className="text-gray-700">
+                  "Excelente metodología de enseñanza, las clases son muy dinámicas y el material es muy completo."
+                </p>
+                <div className="mt-2 flex items-center">
+                  <span className="text-sm text-gray-500">Frecuencia: Alta</span>
+                  <span className="mx-2 text-gray-300">|</span>
+                  <span className="text-sm font-medium text-green-600">Positivo</span>
+                </div>
+              </div>
+              <div className="p-4 border rounded-md bg-yellow-50">
+                <p className="text-gray-700">
+                  "El contenido es bueno pero algunos temas requieren más tiempo de explicación."
+                </p>
+                <div className="mt-2 flex items-center">
+                  <span className="text-sm text-gray-500">Frecuencia: Media</span>
+                  <span className="mx-2 text-gray-300">|</span>
+                  <span className="text-sm font-medium text-yellow-600">Neutral</span>
+                </div>
+              </div>
+            </div>
+          </section>
+        </>
+      )}
     </div>
   );
 };

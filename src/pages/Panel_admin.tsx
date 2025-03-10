@@ -1,8 +1,14 @@
+import { useState } from 'react';
 import { useAuthStore } from '../stores/Autenticacion';
 import Administrador from '../components/Administrador';
 
 const AdminDashboard = () => {
   const logout = useAuthStore(state => state.logout);
+  const [showProfile, setShowProfile] = useState(false);
+  
+    const handleProfileClick = () => {
+      setShowProfile(!showProfile);
+    };
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -13,18 +19,38 @@ const AdminDashboard = () => {
             <img 
               src="/public/imagenes/logo_autonoma.png" 
               alt="Logo Uniautonoma" 
-              className="h-8"
+              className="h-20"
             />
             <h1 className="text-2xl font-bold">Corporación Universitaria Autónoma del Cauca</h1>
-          </div>
-          <button
+            </div>
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={handleProfileClick}
+              className="justify-center"
+            >
+              <img 
+                src="/public/imagenes/perfil.png" 
+                alt="Perfil" 
+                className="h-14 w-14 rounded-full"
+              />
+            </button>
+            <button
             onClick={logout}
-            className="px-4 py-2 text-sm bg-blue-700 hover:bg-blue-600 rounded-md"
-          >
+            className="px-2 py-1 text-blue-800 bg-blue-100 hover:bg-blue-400 rounded-full"
+            >
             Cerrar Sesión
-          </button>
+            </button>
+          </div>
         </div>
       </header>
+      {/* Boton Perfil Info */}
+      {showProfile && (
+        <div className="absolute top-16 right-16 bg-white shadow-lg rounded-lg p-4">
+          <h2 className="text-xl font-bold mb-2">Información Personal</h2>
+          <p><strong>Nombre:</strong> Nombre del Administrador</p>
+          <p><strong>Correo Institucional:</strong> Administrador@uniautonoma.edu.co</p>
+        </div>
+      )}
 
       {/* Main Content */}
       <main className="flex-grow container mx-auto px-4 py-8">

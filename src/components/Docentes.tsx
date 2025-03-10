@@ -159,6 +159,27 @@ const TeacherSection = () => {
             </div>
           </div>
           {/* Add more comments here */}
+          <div className="p-4 border rounded-md">
+            <p className="text-gray-700">
+              "El contenido es bueno, pero a veces va muy rápido. Las clases son interesantes aunque algunos temas son complejos."
+            </p>
+            <div className="mt-2 flex items-center">
+              <span className="text-sm text-gray-500">Fecha: 15/03/2024</span>
+              <span className="mx-2 text-gray-300">|</span>
+              <span className="text-sm font-medium text-yellow-600">Neutral</span>
+            </div>
+          </div>
+
+          <div className="p-4 border rounded-md">
+            <p className="text-gray-700">
+              "La comunicación del docente podría mejorar. Falta más interacción con los estudiantes y algunos temas son difíciles de entender debido a la falta de ejemplos prácticos en clase."
+            </p>
+            <div className="mt-2 flex items-center">
+              <span className="text-sm text-gray-500">Fecha: 15/03/2024</span>
+              <span className="mx-2 text-gray-300">|</span>
+              <span className="text-sm font-medium text-red-600">Negativo</span>
+            </div>
+          </div>
         </div>
       </section>
     </div>
