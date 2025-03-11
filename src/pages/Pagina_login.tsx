@@ -26,6 +26,15 @@ const LoginPage = () => {
       </header>
 
       {/* Login Form */}
+      {/* // El componente <header> define la cabecera de la página con estilos de flexbox para centrar el contenido */}
+      <header className="flex justify-center items-center bg-white bg-opacity-20 p-1 rounded-lg shadow-lg w-full max-w-md mx-auto">
+        {/* // El <div> interno actúa como un contenedor adicional para centrar el contenido dentro de la cabecera */}
+        <div className="container mx-auto px-4 flex justify-center items-center">
+          {/* // El <h1> contiene el título principal de la página, con estilos para el tamaño de fuente, peso y alineación */}
+          <h1 className="text-2xl font-bold text-center">Autoevaluación del Docente con Procesamiento de Lenguaje Natural</h1>
+        </div>
+      </header>
+
       <div className="flex-grow flex items-center justify-center px-4">
         <div className="bg-white bg-opacity-20 p-8 rounded-lg shadow-lg w-full max-w-md">
           <h2 className="text-2xl font-bold text-center mb-6">Inicio de Sesion</h2>
@@ -75,9 +84,9 @@ const LoginPage = () => {
           <div className="flex flex-col md:flex-row justify-between">
             <div className="mb-6 md:mb-0 md:w-1/2">
               <div className="flex items-center space-x-2 mb-4">
-                <img 
-                  src="/imagenes/logo_autonoma.png" 
-                  alt="Logo Uniautonoma" 
+                <img
+                  src="/imagenes/logo_autonoma.png"
+                  alt="Logo Uniautonoma"
                   className="h-12"
                 />
                 <h2 className="text-xl font-bold">Corporación Universitaria Autónoma del Cauca</h2>
@@ -90,9 +99,9 @@ const LoginPage = () => {
               <h3 className="text-lg font-semibold mb-4">Contacto</h3>
               <p className="text-gray-400">Corporación Universitaria Autónoma del Cauca</p>
               <p className="text-gray-400">Popayán, Cauca, Colombia</p>
-              <a 
-                href="https://www.uniautonoma.edu.co/" 
-                target="_blank" 
+              <a
+                href="https://www.uniautonoma.edu.co/"
+                target="_blank"
                 rel="noopener noreferrer"
                 className="text-blue-400 hover:text-blue-300 mt-2 inline-block"
               >
