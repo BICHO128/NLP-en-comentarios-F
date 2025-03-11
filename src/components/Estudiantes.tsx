@@ -141,7 +141,7 @@ const Estudiantes = () => {
     <div className="space-y-8 max-w-4xl mx-auto">
       {/* Selección de Docente */}
       <section className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-2xl font-semibold text-center mb-4">Evalua tu Docente</h2>
+        <h2 className="text-2xl font-semibold text-center mb-4">Evalúa tu Docente</h2>
         <div className="max-w-xl mx-auto">
           <select
             value={selectedTeacher}
