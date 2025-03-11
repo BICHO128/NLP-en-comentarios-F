@@ -26,14 +26,17 @@ const LoginPage = () => {
       </header>
 
       {/* Login Form */}
-      {/* // El componente <header> define la cabecera de la página con estilos de flexbox para centrar el contenido */}
-      <header className="flex justify-center items-center bg-white bg-opacity-20 p-1 rounded-lg shadow-lg w-full max-w-md mx-auto">
-        {/* // El <div> interno actúa como un contenedor adicional para centrar el contenido dentro de la cabecera */}
+      <header className="flex justify-center items-center p-8 w-full">
         <div className="container mx-auto px-4 flex justify-center items-center">
-          {/* // El <h1> contiene el título principal de la página, con estilos para el tamaño de fuente, peso y alineación */}
-          <h1 className="text-2xl font-bold text-center">Autoevaluación del Docente con Procesamiento de Lenguaje Natural</h1>
+          <h1 className="text-2xl sm:text-xl md:text-2xl lg:text-3xl font-bold text-center bg-white bg-opacity-20 p-4 rounded-lg w-full max-w-2xl shadow-lg">
+            Autoevaluación del Docente con
+            <br />
+            Procesamiento de Lenguaje Natural
+          </h1>
         </div>
       </header>
+
+
 
       <div className="flex-grow flex items-center justify-center px-4">
         <div className="bg-white bg-opacity-20 p-8 rounded-lg shadow-lg w-full max-w-md">
