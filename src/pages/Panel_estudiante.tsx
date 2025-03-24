@@ -42,14 +42,6 @@ const StudentDashboard = () => {
             </button>
           </div>
         </div>
-      </header>
-      {/* Boton Perfil Info */}
-      {showProfile && (
-        <div className="absolute top-16 right-16 bg-white shadow-lg rounded-lg p-4">
-          <h2 className="text-xl font-bold mb-2">Información Personal</h2>
-          <p><strong>Nombre:</strong> Nombre del Estudiante</p>
-          <p><strong>Correo Institucional:</strong> estudiante@uniautonoma.edu.co</p>
-        </div>
       )}
 
       {/* Main Content */}
