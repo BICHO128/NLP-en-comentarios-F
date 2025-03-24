@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuthStore } from '../stores/Autenticacion';
+import Footer from '../components/shared/Footer';
 
 const LoginPage = () => {
   const [username, setUsername] = useState('');
@@ -28,7 +29,7 @@ const LoginPage = () => {
       {/* Login Form */}
       <header className="flex justify-center items-center p-8 w-full">
         <div className="container mx-auto px-4 flex justify-center items-center">
-          <h1 className="text-2xl sm:text-xl md:text-2xl lg:text-3xl font-bold text-center bg-white bg-opacity-20 p-4 rounded-lg w-full max-w-2xl shadow-lg">
+          <h1 className="text-2xl sm:text-xl md:text-2xl lg:text-4xl font-bold text-center bg-white bg-opacity-70 p-4 rounded-lg w-full max-w-2xl shadow-lg">
             Autoevaluación del Docente con
             <br />
             Procesamiento de Lenguaje Natural
@@ -39,11 +40,11 @@ const LoginPage = () => {
 
 
       <div className="flex-grow flex items-center justify-center px-4">
-        <div className="bg-white bg-opacity-20 p-8 rounded-lg shadow-lg w-full max-w-md">
-          <h2 className="text-2xl font-bold text-center mb-6">Inicio de Sesion</h2>
+        <div className="bg-white bg-opacity-70 p-8 rounded-lg shadow-lg w-full max-w-md">
+          <h2 className="text-4xl font-bold text-center mb-6">Inicio de Sesion</h2>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-800 mb-1">
+              <label htmlFor="username" className="block text-xl font-bold text-gray-800 mb-1">
                 Usuario
               </label>
               <input
@@ -51,12 +52,12 @@ const LoginPage = () => {
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full text-xl px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                 required
               />
             </div>
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-800 mb-1">
+              <label htmlFor="password" className="block text-xl font-bold text-gray-800 mb-1">
                 Contraseña
               </label>
               <input
@@ -64,7 +65,7 @@ const LoginPage = () => {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full text-xl px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                 required
               />
             </div>
@@ -73,7 +74,7 @@ const LoginPage = () => {
             )}
             <button
               type="submit"
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition duration-200"
+              className="w-full text-xl font-bold bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition duration-200"
             >
               Ingresar
             </button>
@@ -82,41 +83,7 @@ const LoginPage = () => {
       </div>
 
       {/* Footer */}
-      <footer className="bg-gray-800 text-white py-8 mt-auto">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between">
-            <div className="mb-6 md:mb-0 md:w-1/2">
-              <div className="flex items-center space-x-2 mb-4">
-                <img
-                  src="/imagenes/logo_autonoma.png"
-                  alt="Logo Uniautonoma"
-                  className="h-12"
-                />
-                <h2 className="text-xl font-bold">Corporación Universitaria Autónoma del Cauca</h2>
-              </div>
-              <p className="text-gray-400 max-w-md">
-                Proyecto de análisis de comentarios estudiantiles mediante procesamiento de lenguaje natural para la Corporación Universitaria Autónoma del Cauca.
-              </p>
-            </div>
-            <div className="md:w-1/2">
-              <h3 className="text-lg font-semibold mb-4">Contacto</h3>
-              <p className="text-gray-400">Corporación Universitaria Autónoma del Cauca</p>
-              <p className="text-gray-400">Popayán, Cauca, Colombia</p>
-              <a
-                href="https://www.uniautonoma.edu.co/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-400 hover:text-blue-300 mt-2 inline-block"
-              >
-                www.uniautonoma.edu.co
-              </a>
-            </div>
-          </div>
-          <div className="border-t border-gray-700 mt-8 pt-6 text-center text-gray-400">
-            <p>&copy; {new Date().getFullYear()} Corporación Universitaria Autónoma del Cauca. Todos los derechos reservados.</p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };
