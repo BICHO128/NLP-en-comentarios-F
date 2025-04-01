@@ -19,7 +19,7 @@ interface AuthState {
 const mockUsers = {
   'urrutia': { password: '123', role: 'student' },
   'ana maria': { password: '123', role: 'teacher' },
-  'fercho': { password: '123', role: 'admin' },
+  'admin': { password: '123', role: 'admin' },
 };
 
 export const useAuthStore = create<AuthState>((set) => ({

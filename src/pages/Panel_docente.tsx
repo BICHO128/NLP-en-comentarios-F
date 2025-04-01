@@ -33,14 +33,14 @@ const StudentDashboard = () => {
             className="bg-white shadow-lg rounded-lg p-4 opacity-80"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="text-xl font-bold mb-2">Información Personal</h2>
+            <h2 className="text-xl font-bold mb-2 text-center">Información Personal</h2>
 
             <p>
-              <strong>Nombre:</strong> Nombre del Administrador
+              <strong>Nombre:</strong> Nombre del Docente
             </p>
             <p>
               <strong>Correo Institucional:</strong>{" "}
-              Administrador@uniautonoma.edu.co
+              Docente@uniautonoma.edu.co
             </p>
             <div className="flex items-center space-x-4 justify-center mt-4">
 

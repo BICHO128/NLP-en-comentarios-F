@@ -35,11 +35,14 @@ const Administrador = () => {
   const [searchTerm, setSearchTerm] = useState(''); // Estado para el término de búsqueda
   const [selectedCommentType, setSelectedCommentType] = useState('all'); // Estado para el tipo de comentario seleccionado
 
+
   // Datos de ejemplo de docentes
   const teachers = [
     'ANA MARIA CAVIEDES CASTILLO',
     'MANUEL OBANDO',
     'FERNANDO CONCHA',
+    'VICTOR HUGO RUIZ',
+    'CAROL STAPHANY CERTUCHE',
   ];
 
   // Filtra los docentes según el término de búsqueda
@@ -305,16 +308,17 @@ const Administrador = () => {
 
   return (
     <div className="space-y-8">
-      {/* Título */}
-      <div className="text-center">
-        <h1 className="text-2xl font-bold">ESTADÍSTICAS DE LA AUTOEVALUACIÓN AL DOCENTE</h1>
-        <h2 className="text-lg font-semibold text-gray-500">
-          realizado por los estudiantes
-        </h2>
-      </div>
-
       {/* Selección de docente */}
       <section className="bg-white rounded-lg shadow-md p-6">
+        {/* Título */}
+        <div className="text-center text-2xl font-bold mb-10">
+          <h1>Estadísticas de la Autoevaluación al Docente</h1>
+          <h2 className="text-lg font-semibold text-gray-500">
+            realizado por los estudiantes
+          </h2>
+        </div>
+
+        {/* Búsqueda de docentes */}
         <h2 className="text-xl font-semibold mb-4">Docentes Matriculados</h2>
         <input
           type="text"
@@ -330,11 +334,10 @@ const Administrador = () => {
               <button
                 key={teacher}
                 onClick={() => setSelectedTeacher(teacher)}
-                className={`p-4 rounded-lg border transition-all ${
-                  selectedTeacher === teacher
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 hover:border-blue-300'
-                }`}
+                className={`p-4 rounded-lg border transition-all ${selectedTeacher === teacher
+                  ? "border-blue-500 bg-blue-50"
+                  : "border-gray-200 hover:border-blue-300"
+                  }`}
               >
                 <h3 className="font-medium">{teacher}</h3>
                 <p className="text-sm text-gray-500 mt-1">Ver estadísticas</p>
@@ -360,27 +363,67 @@ const Administrador = () => {
           {/* Cuadro de mando */}
           <div className="grid grid-cols-12 gap-6">
             {/* Fila superior - Tres gráficos de líneas */}
-            <div className="col-span-4 bg-white rounded-lg shadow p-4 h-[200px]">
-              <h3 className="text-lg font-semibold mb-2">Satisfacción General</h3>
-              <Line data={lineChartData1} options={chartOptions} id="satisfaction-chart" />
+            <div className="col-span-4 bg-white rounded-lg shadow p-8 h-[200px]">
+              <h3 className="text-lg font-semibold mb-1 text-center">
+                Satisfacción General
+              </h3>
+              <div className="h-full">
+                <Line
+                  data={lineChartData1}
+                  options={chartOptions}
+                  id="satisfaction-chart"
+                />
+              </div>
             </div>
-            <div className="col-span-4 bg-white rounded-lg shadow p-4 h-[200px]">
-              <h3 className="text-lg font-semibold mb-2">Participación Estudiantil</h3>
-              <Line data={lineChartData2} options={chartOptions} id="participation-chart" />
+            <div className="col-span-4 bg-white rounded-lg shadow p-8 h-[200px]">
+              <h3 className="text-lg font-semibold mb-1 text-center">
+                Participación Estudiantil
+              </h3>
+              <div className="h-full">
+                <Line
+                  data={lineChartData2}
+                  options={chartOptions}
+                  id="participation-chart"
+                />
+              </div>
             </div>
-            <div className="col-span-4 bg-white rounded-lg shadow p-4 h-[200px]">
-              <h3 className="text-lg font-semibold mb-2">Calidad del Material</h3>
-              <Line data={lineChartData3} options={chartOptions} id="quality-chart" />
+            <div className="col-span-4 bg-white rounded-lg shadow p-8 h-[200px]">
+              <h3 className="text-lg font-semibold mb-1 text-center">
+                Calidad del Material
+              </h3>
+              <div className="h-full">
+                <Line
+                  data={lineChartData3}
+                  options={chartOptions}
+                  id="quality-chart"
+                />
+              </div>
             </div>
 
             {/* Fila del medio - Gráficos de pastel */}
-            <div className="col-span-6 bg-white rounded-lg shadow p-4 h-[300px]">
-              <h3 className="text-lg font-semibold mb-2">Distribución de Aspectos Evaluados</h3>
-              <Doughnut data={pieChartData} options={pieOptions} id="aspects-chart" />
+            <div className="col-span-4 bg-white rounded-lg shadow p-9 h-[300px]">
+              <h3 className="text-lg font-semibold mb-1 text-center">
+                Distribución de Aspectos Evaluados
+              </h3>
+              <div className="h-full">
+                <Doughnut
+                  data={pieChartData}
+                  options={pieOptions}
+                  id="aspects-chart"
+                />
+              </div>
             </div>
-            <div className="col-span-6 bg-white rounded-lg shadow p-4 h-[300px]">
-              <h3 className="text-lg font-semibold mb-2">Distribución de Comentarios</h3>
-              <Doughnut data={commentsDistributionData} options={donutOptions} id="comments-distribution-chart" />
+            <div className="col-span-4 bg-white rounded-lg shadow p-8 h-[300px]">
+              <h3 className="text-lg font-semibold mb-2 text-center">
+                Distribución de Comentarios
+              </h3>
+              <div className="h-full">
+                <Doughnut
+                  data={commentsDistributionData}
+                  options={donutOptions}
+                  id="comments-distribution-chart"
+                />
+              </div>
             </div>
 
             {/* Sección de comentarios con filtro */}
@@ -402,26 +445,32 @@ const Administrador = () => {
                 {getFilteredComments().map((comment, index) => (
                   <div
                     key={index}
-                    className={`p-4 border rounded-md ${
-                      comment.type === 'positive'
-                        ? 'bg-green-50'
-                        : comment.type === 'neutral'
-                        ? 'bg-yellow-50'
-                        : 'bg-red-50'
-                    }`}
+                    className={`p-4 border rounded-md ${comment.type === "positive"
+                      ? "bg-green-50"
+                      : comment.type === "neutral"
+                        ? "bg-yellow-50"
+                        : "bg-red-50"
+                      }`}
                   >
                     <p className="text-gray-700">{comment.text}</p>
                     <div className="mt-2 flex items-center">
-                      <span className="text-sm text-gray-500">Frecuencia: {comment.frequency}</span>
+                      <span className="text-sm text-gray-500">
+                        Frecuencia: {comment.frequency}
+                      </span>
                       <span className="mx-2 text-gray-300">|</span>
-                      <span className={`text-sm font-medium ${
-                        comment.type === 'positive'
-                          ? 'text-green-600'
-                          : comment.type === 'neutral'
-                          ? 'text-yellow-600'
-                          : 'text-red-600'
-                      }`}>
-                        {comment.type === 'positive' ? 'Positivo' : comment.type === 'neutral' ? 'Neutral' : 'Negativo'}
+                      <span
+                        className={`text-sm font-medium ${comment.type === "positive"
+                          ? "text-green-600"
+                          : comment.type === "neutral"
+                            ? "text-yellow-600"
+                            : "text-red-600"
+                          }`}
+                      >
+                        {comment.type === "positive"
+                          ? "Positivo"
+                          : comment.type === "neutral"
+                            ? "Neutral"
+                            : "Negativo"}
                       </span>
                     </div>
                   </div>

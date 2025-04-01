@@ -190,23 +190,33 @@ const Docentes = () => {
   return (
     <div className="grid grid-cols-12 gap-6 p-6 bg-gray-100">
       {/* Top row - Three line charts */}
-      <div className="col-span-4 bg-white rounded-lg shadow p-4 h-[200px]">
-        <h3 className="text-lg font-semibold mb-2">Satisfacción General</h3>
+      <div className="col-span-4 bg-white rounded-lg shadow p-8 h-[200px]">
+        <h3 className="text-lg font-semibold mb-1 text-center">
+          Satisfacción General
+        </h3>
         <Line data={lineChartData1} options={chartOptions} />
       </div>
-      <div className="col-span-4 bg-white rounded-lg shadow p-4 h-[200px]">
-        <h3 className="text-lg font-semibold mb-2">Participación Estudiantil</h3>
+      <div className="col-span-4 bg-white rounded-lg shadow p-8 h-[200px]">
+        <h3 className="text-lg font-semibold mb-1 text-center">
+          Participación Estudiantil
+        </h3>
         <Line data={lineChartData2} options={chartOptions} />
       </div>
-      <div className="col-span-4 bg-white rounded-lg shadow p-4 h-[200px]">
-        <h3 className="text-lg font-semibold mb-2">Calidad del Material</h3>
+      <div className="col-span-4 bg-white rounded-lg shadow p-8 h-[200px]">
+        <h3 className="text-lg font-semibold mb-1 text-center">
+          Calidad del Material
+        </h3>
         <Line data={lineChartData3} options={chartOptions} />
       </div>
 
       {/* Middle row - Pie chart and progress bars */}
       <div className="col-span-6 bg-white rounded-lg shadow p-4 h-[300px]">
-        <h3 className="text-lg font-semibold mb-2">Distribución de Aspectos Evaluados</h3>
-        <Pie data={pieChartData} options={pieOptions} />
+        <h3 className="text-lg font-semibold mb-4 text-center">
+          Distribución de Aspectos Evaluados
+        </h3>
+        <div className="h-[220px] flex items-center justify-center">
+          <Pie data={pieChartData} options={pieOptions} />
+        </div>
       </div>
       <div className="col-span-6 bg-white rounded-lg shadow p-4">
         <h3 className="text-lg font-semibold mb-4">Indicadores de Desempeño</h3>
@@ -229,9 +239,11 @@ const Docentes = () => {
       </div>
 
       {/* Bottom row - Comments distribution and filtered comments */}
-      <div className="col-span-6 bg-white rounded-lg shadow p-4">
-        <h3 className="text-lg font-semibold mb-4">Distribución de Comentarios</h3>
-        <div className="h-[300px] flex items-center justify-center">
+      <div className="col-span-6 bg-white rounded-lg shadow p-4 h-[420px]">
+        <h3 className="text-lg font-semibold mb-2 text-center">
+          Distribución de Comentarios
+        </h3>
+        <div className="h-[350px] flex items-center justify-center">
           <Doughnut data={commentsDistributionData} options={donutOptions} />
         </div>
       </div>
@@ -255,26 +267,30 @@ const Docentes = () => {
           {getFilteredComments().map((comment, index) => (
             <div
               key={index}
-              className={`p-3 rounded-lg ${
-                comment.type === 'positive'
-                  ? 'bg-green-50 border border-green-200'
-                  : comment.type === 'neutral'
-                  ? 'bg-yellow-50 border border-yellow-200'
-                  : 'bg-red-50 border border-red-200'
-              }`}
+              className={`p-3 rounded-lg ${comment.type === "positive"
+                ? "bg-green-50 border border-green-200"
+                : comment.type === "neutral"
+                  ? "bg-yellow-50 border border-yellow-200"
+                  : "bg-red-50 border border-red-200"
+                }`}
             >
               <p className="text-gray-800">{comment.text}</p>
               <div className="mt-2 flex items-center">
                 <span className="text-sm text-gray-500">{comment.date}</span>
                 <span className="mx-2 text-gray-300">|</span>
-                <span className={`text-sm font-medium ${
-                  comment.type === 'positive'
-                    ? 'text-green-600'
-                    : comment.type === 'neutral'
-                    ? 'text-yellow-600'
-                    : 'text-red-600'
-                }`}>
-                  {comment.type === 'positive' ? 'Positivo' : comment.type === 'neutral' ? 'Neutral' : 'Negativo'}
+                <span
+                  className={`text-sm font-medium ${comment.type === "positive"
+                    ? "text-green-600"
+                    : comment.type === "neutral"
+                      ? "text-yellow-600"
+                      : "text-red-600"
+                    }`}
+                >
+                  {comment.type === "positive"
+                    ? "Positivo"
+                    : comment.type === "neutral"
+                      ? "Neutral"
+                      : "Negativo"}
                 </span>
               </div>
             </div>
