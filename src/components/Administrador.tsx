@@ -306,6 +306,23 @@ const Administrador = () => {
     pdf.save(`informe-${selectedTeacher}.pdf`); // Guarda el PDF con el nombre del docente seleccionado
   };
 
+  const descargarExcelAdmin = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/api/reportes/admin/excel");
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `reporte_admin_evaluaciones.xlsx`;
+      a.click();
+      a.remove();
+    } catch (error) {
+      console.error("Error al descargar el Excel del admin:", error);
+    }
+  };
+
+
+
   return (
     <div className="space-y-8">
       {/* Selección de docente */}
@@ -356,8 +373,18 @@ const Administrador = () => {
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
             >
               <FileDown className="h-5 w-5" />
-              Descargar Informe Completo
+              Descargar Informe Completo en PDF
             </button>
+
+            <button
+              onClick={descargarExcelAdmin}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors ml-4"
+            >
+              <FileDown className="h-5 w-5" />
+              Descargar Todas las Evaluaciones en Excel
+            </button>
+
+
           </div>
 
           {/* Cuadro de mando */}

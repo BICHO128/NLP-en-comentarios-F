@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Line, Pie, Doughnut } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -23,7 +23,35 @@ ChartJS.register(
   Legend
 );
 
+
+
+
+
+
 const Docentes = () => {
+
+
+  interface Curso {
+    id: number;
+    nombre: string;
+  }
+
+  interface Docente {
+    id: number;
+    nombre: string;
+  }
+
+
+  const [docente, setDocente] = useState<Docente | null>(null);
+  const [curso, setCurso] = useState<Curso | null>(null);
+
+  useEffect(() => {
+    // Simulación de datos del docente y su curso (reemplaza con API real si lo deseas)
+    setDocente({ id: 4, nombre: 'Diego Fernando Prado' });
+    setCurso({ id: 6, nombre: 'Complejidad Algorítmica' });
+  }, []);
+
+
   const [selectedCommentType, setSelectedCommentType] = useState('all');
 
   // Data for the top three charts
@@ -187,6 +215,39 @@ const Docentes = () => {
     }));
   };
 
+
+  const descargarPDF = async (docenteId: number, cursoId: number) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/reportes/docente/${docenteId}/curso/${cursoId}/pdf`);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `reporte_${docenteId}_${cursoId}.pdf`;
+      a.click();
+      a.remove();
+    } catch (error) {
+      console.error("Error al descargar el PDF:", error);
+    }
+  };
+
+  const descargarExcel = async (docenteId: number, cursoId: number) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/reportes/docente/${docenteId}/curso/${cursoId}/excel`);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `reporte_${docenteId}_${cursoId}.xlsx`;
+      a.click();
+      a.remove();
+    } catch (error) {
+      console.error("Error al descargar el Excel:", error);
+    }
+  };
+
+
+
   return (
     <div className="grid grid-cols-12 gap-6 p-6 bg-gray-100">
       {/* Top row - Three line charts */}
@@ -196,6 +257,27 @@ const Docentes = () => {
         </h3>
         <Line data={lineChartData1} options={chartOptions} />
       </div>
+
+
+      {docente && curso && (
+        <div className="col-span-12 flex justify-center mb-4">
+          <button
+            onClick={() => descargarPDF(docente.id, curso.id)}
+            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 m-2"
+          >
+            Descargar PDF
+          </button>
+          <button
+            onClick={() => descargarExcel(docente.id, curso.id)}
+            className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 m-2"
+          >
+            Descargar Excel
+          </button>
+        </div>
+      )}
+
+
+
       <div className="col-span-4 bg-white rounded-lg shadow p-8 h-[200px]">
         <h3 className="text-lg font-semibold mb-1 text-center">
           Participación Estudiantil
