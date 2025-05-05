@@ -1,514 +1,687 @@
-import React, { useState } from 'react'; // Importa React y el hook useState
-import { Doughnut, Line } from 'react-chartjs-2'; // Importa los componentes Doughnut y Line de react-chartjs-2
-// Importamos varios componentes del paquete 'chart.js' que nos permitirán crear diferentes tipos de gráficos en nuestra aplicación React.
+import { useState, useEffect, ChangeEvent } from 'react';
+import { Doughnut, Bar, Pie } from 'react-chartjs-2';
 import {
-  Chart as ChartJS, // Importamos la clase principal 'Chart' de 'chart.js', que es la base para crear gráficos.
-  CategoryScale, // Importamos 'CategoryScale', que se utiliza para definir escalas categóricas en los gráficos.
-  LinearScale, // Importamos 'LinearScale', que se utiliza para definir escalas lineales en los gráficos.
-  PointElement, // Importamos 'PointElement', que se utiliza para representar puntos en gráficos de líneas y dispersión.
-  LineElement, // Importamos 'LineElement', que se utiliza para dibujar líneas en gráficos de líneas.
-  BarElement, // Importamos 'BarElement', que se utiliza para dibujar barras en gráficos de barras.
-  Title, // Importamos 'Title', que se utiliza para agregar títulos a los gráficos.
-  Tooltip, // Importamos 'Tooltip', que se utiliza para mostrar información adicional cuando el usuario pasa el cursor sobre los elementos del gráfico.
-  Legend, // Importamos 'Legend', que se utiliza para mostrar una leyenda que explica los diferentes elementos del gráfico.
-  ArcElement, // Importamos 'ArcElement', que se utiliza para dibujar arcos en gráficos de tipo pastel o anillo.
-} from 'chart.js'; // Importa varios elementos de chart.js
-import { FileDown } from 'lucide-react'; // Importa el icono FileDown de lucide-react
-import jsPDF from 'jspdf'; // Importa la librería jsPDF
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
+import { useAuthStore } from '../stores/Autenticacion';
+import { useDarkMode } from '../hooks/useDarkMode';
 
-// Registra los componentes de chart.js
+
+
+
 ChartJS.register(
-  CategoryScale, // Escala de categorías para el eje X
-  LinearScale, // Escala lineal para el eje Y
-  PointElement, // Elemento de punto para gráficos de línea
-  LineElement, // Elemento de línea para gráficos de línea
-  BarElement, // Elemento de barra para gráficos de barras
-  ArcElement, // Elemento de arco para gráficos de pastel y donut
-  Title, // Título del gráfico
-  Tooltip, // Tooltip para mostrar información al pasar el ratón
-  Legend // Leyenda del gráfico
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+  ChartDataLabels
 );
 
-const Administrador = () => {
-  // Define los estados locales
-  const [selectedTeacher, setSelectedTeacher] = useState(''); // Estado para el docente seleccionado
-  const [searchTerm, setSearchTerm] = useState(''); // Estado para el término de búsqueda
-  const [selectedCommentType, setSelectedCommentType] = useState('all'); // Estado para el tipo de comentario seleccionado
+interface Curso {
+  id: number;
+  nombre: string;
+}
+interface Calificacion {
+  criterio: string;
+  valor: number;
+}
+
+interface DocenteConCursos {
+  id: number;
+  docente_id: number;
+  nombre: string;
+  cursos: Curso[];
+}
+
+interface Comentario {
+  sentimiento: 'positivo' | 'neutral' | 'negativo';
+  texto: string;
+  tipo: 'docente' | 'curso';
+}
+
+interface Evaluacion {
+  id: number;
+  comentarios: Comentario[];
+  fecha: string;
+  sentimiento_docente: 'positivo' | 'neutral' | 'negativo';
+  sentimiento_curso: 'positivo' | 'neutral' | 'negativo';
+  calificaciones: Calificacion[];
+}
+
+const cursoLabels = ['Metodología', 'Material Didáctico', 'Claridad', 'Retroalimentación'];
+const cursoKeys = ['metodologia', 'material_didactico', 'claridad', 'retroalimentacion'];
+
+const docenteLabels = ['Satisfacción General', 'Comunicación', 'Puntualidad', 'Respeto', 'Disponibilidad'];
+const docenteKeys = ['satisfaccion_general', 'comunicacion', 'puntualidad', 'respeto', 'disponibilidad'];
 
 
-  // Datos de ejemplo de docentes
-  const teachers = [
-    'ANA MARIA CAVIEDES CASTILLO',
-    'MANUEL OBANDO',
-    'FERNANDO CONCHA',
-    'VICTOR HUGO RUIZ',
-    'CAROL STAPHANY CERTUCHE',
-  ];
+export default function Administrador() {
+  const [docentesConCursos, setDocentesConCursos] = useState<DocenteConCursos[]>([]);
+  const [selectedTeacher, setSelectedTeacher] = useState('');
+  const [selectedCourse, setSelectedCourse] = useState('');
+  const [evaluaciones, setEvaluaciones] = useState<Evaluacion[]>([]);
+  const [mostrarEvaluaciones, setMostrarEvaluaciones] = useState(false);
+  const [filtroDocente, setFiltroDocente] = useState<'todos' | 'positivo' | 'neutral' | 'negativo'>('todos');
+  const [filtroCurso, setFiltroCurso] = useState<'todos' | 'positivo' | 'neutral' | 'negativo'>('todos');
+  const { isDarkMode } = useDarkMode();
+  const { token } = useAuthStore();
 
-  // Filtra los docentes según el término de búsqueda
-  const filteredTeachers = teachers.filter((teacher) =>
-    teacher.toLowerCase().includes(searchTerm.toLowerCase())
+
+
+  // 1) Traer lista de TODOS los docentes con sus cursos
+  useEffect(() => {
+    async function fetchDocentesConCursos() {
+      try {
+        const res = await fetch(
+          'http://localhost:5000/api/evaluaciones/docentes-con-cursos',
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (!res.ok) throw new Error('Error al cargar docentes con cursos');
+        const data: DocenteConCursos[] = await res.json();
+        setDocentesConCursos(data);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    fetchDocentesConCursos();
+  }, [token]);
+
+
+
+  const obtenerEvaluaciones = async () => {
+    if (!selectedTeacher || !selectedCourse) {
+      console.error("Docente o curso no seleccionados");
+      return;
+    }
+    try {
+      // Encuentra el docente y curso seleccionados para obtener sus IDs
+      const docente = docentesConCursos.find(d => d.nombre === selectedTeacher);
+      const curso = docente?.cursos.find(c => c.nombre === selectedCourse);
+
+      // Depuración: Verifica los valores
+      console.log("Selected Teacher:", selectedTeacher);
+      console.log("Selected Course:", selectedCourse);
+      console.log("Docente encontrado:", docente);
+      console.log("Curso encontrado:", curso);
+
+      if (!docente || !curso) {
+        console.error("Docente o curso no encontrados");
+        return;
+      }
+
+      // Ajustar la URL a la nueva estructura
+      const res = await fetch(
+        `http://localhost:5000/api/evaluaciones/docente/${docente.docente_id}/curso/${curso.id}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (!res.ok) throw new Error('Error al cargar evaluaciones');
+      const data: Evaluacion[] = await res.json();
+
+      console.log("Evaluaciones recibidas:", data);
+
+      setEvaluaciones(data);
+      setMostrarEvaluaciones(true);
+    } catch (error) {
+      console.error("Error al obtener evaluaciones:", error);
+      setEvaluaciones([]);
+      setMostrarEvaluaciones(false);
+    }
+  };
+
+  // const calificacionToValor = (valor: string): number => {
+  //   switch (valor.toLowerCase()) {
+  //     case 'excelente': return 5;
+  //     case 'bueno': return 4;
+  //     case 'regular': return 3;
+  //     case 'malo': return 2;
+  //     case 'pesimo': return 1;
+  //     default: return 0;
+  //   }
+  // };
+
+  // 4) Calcular promedios
+  const calcularPromedios = (keys: string[]): number[] => {
+    if (!evaluaciones.length) return keys.map(() => 0);
+    console.log("Evaluaciones recibidas:", evaluaciones);
+
+    return keys.map(key => {
+      const suma = evaluaciones.reduce((sum, ev) => {
+        const calificacion = ev.calificaciones.find(c => c.criterio === key);
+        return sum + (calificacion ? calificacion.valor : 0);
+      }, 0);
+
+      return parseFloat((suma / evaluaciones.length).toFixed(1));
+    });
+  };
+
+  // 5) Filtrar comentarios
+  const filtrarComentarios = (tipo: 'docente' | 'curso', filtro: string) =>
+    evaluaciones
+      .flatMap(ev => ev.comentarios.filter(com => com.tipo === tipo))
+      .filter(com => (filtro === 'todos' ? true : com.sentimiento === filtro));
+  console.log("Evaluaciones recibidas:", evaluaciones);
+
+  const sentimientosDocente = evaluaciones.reduce(
+    (acc, ev) => {
+      ev.comentarios
+        .filter(com => com.tipo === 'docente')
+        .forEach(com => {
+          acc[com.sentimiento]++;
+        });
+      return acc;
+    },
+    { positivo: 0, neutral: 0, negativo: 0 }
   );
 
-  // Datos para los gráficos de líneas
-  const lineChartData1 = {
-    labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
-    datasets: [
-      {
-        label: 'Satisfacción General',
-        data: [65, 75, 70, 80, 75, 85],
-        fill: true,
-        backgroundColor: 'rgba(255, 99, 132, 0.2)',
-        borderColor: 'rgba(255, 99, 132, 1)',
-        tension: 0.4,
-      },
-    ],
-  };
+  const sentimientosCurso = evaluaciones.reduce(
+    (acc, ev) => {
+      ev.comentarios
+        .filter(com => com.tipo === 'curso')
+        .forEach(com => {
+          acc[com.sentimiento]++;
+        });
+      return acc;
+    },
+    { positivo: 0, neutral: 0, negativo: 0 }
+  );
 
-  const lineChartData2 = {
-    labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
-    datasets: [
-      {
-        label: 'Participación Estudiantil',
-        data: [40, 60, 55, 75, 65, 70],
-        fill: true,
-        backgroundColor: 'rgba(54, 162, 235, 0.2)',
-        borderColor: 'rgba(54, 162, 235, 1)',
-        tension: 0.4,
-      },
-    ],
-  };
+  const cursoPromedios = calcularPromedios(cursoKeys);
+  const docentePromedios = calcularPromedios(docenteKeys);
 
-  const lineChartData3 = {
-    labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
+  const barData = {
+    labels: [...cursoLabels, ...docenteLabels],
     datasets: [
       {
-        label: 'Calidad del Material',
-        data: [55, 65, 60, 70, 75, 80],
-        fill: true,
-        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-        borderColor: 'rgba(75, 192, 192, 1)',
-        tension: 0.4,
-      },
-    ],
-  };
-
-  // Datos para el gráfico de pastel
-  const pieChartData = {
-    labels: ['Metodología', 'Comunicación', 'Material', 'Puntualidad'],
-    datasets: [
-      {
-        data: [40, 25, 20, 15],
-        backgroundColor: [
-          'rgba(255, 99, 132, 0.8)',
-          'rgba(54, 162, 235, 0.8)',
-          'rgba(75, 192, 192, 0.8)',
-          'rgba(153, 102, 255, 0.8)',
-        ],
-        borderColor: [
-          'rgba(255, 99, 132, 1)',
-          'rgba(54, 162, 235, 1)',
-          'rgba(75, 192, 192, 1)',
-          'rgba(153, 102, 255, 1)',
-        ],
+        label: 'Promedio',
+        data: [...cursoPromedios, ...docentePromedios],
+        backgroundColor: 'rgba(54,162,235,0.6)',
+        borderColor: 'rgba(54,162,235,1)',
         borderWidth: 1,
       },
     ],
-  };
-
-  // Datos para el gráfico de distribución de comentarios
-  const commentsDistributionData = {
-    labels: ['Positivos', 'Neutrales', 'Negativos'],
-    datasets: [
-      {
-        data: [65, 25, 10],
-        backgroundColor: [
-          'rgba(34, 197, 94, 0.8)',
-          'rgba(234, 179, 8, 0.8)',
-          'rgba(239, 68, 68, 0.8)',
-        ],
-        borderColor: [
-          'rgb(34, 197, 94)',
-          'rgb(234, 179, 8)',
-          'rgb(239, 68, 68)',
-        ],
-        borderWidth: 1,
-      },
-    ],
-  };
-
-  // Datos de ejemplo de comentarios
-  const allComments = {
-    positive: [
-      { text: "Excelente metodología de enseñanza, las clases son muy dinámicas y el material es muy completo.", frequency: "Alta" },
-      { text: "Las explicaciones son muy claras y precisas.", frequency: "Media" },
-    ],
-    neutral: [
-      { text: "El contenido es bueno pero algunos temas requieren más tiempo de explicación.", frequency: "Media" },
-      { text: "Las clases son interesantes aunque algunos temas son complejos.", frequency: "Baja" },
-    ],
-    negative: [
-      { text: "Falta más ejemplos prácticos en clase.", frequency: "Baja" },
-      { text: "La comunicación podría mejorar.", frequency: "Baja" },
-    ],
-  };
-
-  // Filtra los comentarios según el tipo seleccionado
-  const getFilteredComments = () => {
-    if (selectedCommentType === 'all') {
-      return [
-        ...allComments.positive.map(c => ({ ...c, type: 'positive' })),
-        ...allComments.neutral.map(c => ({ ...c, type: 'neutral' })),
-        ...allComments.negative.map(c => ({ ...c, type: 'negative' })),
-      ];
-    }
-    return allComments[selectedCommentType as keyof typeof allComments].map(c => ({
-      ...c,
-      type: selectedCommentType,
-    }));
-  };
-
-  // Opciones para los gráficos
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        display: false,
-      },
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        max: 100,
-      },
-    },
-  };
-
-  const pieOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'right' as const,
-      },
-    },
   };
 
   const donutOptions = {
     responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'bottom' as const,
-      },
-    },
+    plugins: { legend: { position: 'bottom' as const } },
     cutout: '70%',
   };
 
-  // Maneja el evento de presionar una tecla en el campo de búsqueda
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && filteredTeachers.length > 0) {
-      setSelectedTeacher(filteredTeachers[0]);
-    }
+  // Datos para las gráficas de Pie
+  const pieDataDocente = {
+    labels: ['Positivos', 'Neutrales', 'Negativos'],
+    datasets: [
+      {
+        data: [sentimientosDocente.positivo, sentimientosDocente.neutral, sentimientosDocente.negativo],
+        backgroundColor: ['#4CAF50', '#FFEB3B', '#F44336'],
+      },
+    ],
   };
 
-  // Genera un informe PDF
-  const generatePDFReport = () => {
-    const pdf = new jsPDF(); // Crea una nueva instancia de jsPDF
-    let yPos = 20; // Posición vertical inicial
-
-    // Título
-    pdf.setFontSize(16);
-    pdf.text('Informe de Evaluación Docente', 20, yPos);
-    yPos += 10;
-
-    pdf.setFontSize(14);
-    pdf.text(`Docente: ${selectedTeacher}`, 20, yPos);
-    yPos += 20;
-
-    // Resumen
-    pdf.setFontSize(12);
-    pdf.text('Resumen:', 20, yPos);
-    yPos += 10;
-
-    const summary = [
-      'Satisfacción general: 85% (Excelente)',
-      'Participación estudiantil: 70% (Bueno)',
-      'Calidad del material: 80% (Muy Bueno)',
-    ];
-
-    summary.forEach(line => {
-      pdf.text(line, 30, yPos);
-      yPos += 7;
-    });
-    yPos += 10;
-
-    // Puntos fuertes
-    pdf.text('Puntos Fuertes:', 20, yPos);
-    yPos += 10;
-
-    const strengths = [
-      'Excelente metodología de enseñanza',
-      'Material didáctico bien preparado',
-      'Buena disposición para resolver dudas',
-    ];
-
-    strengths.forEach(line => {
-      pdf.text(`• ${line}`, 30, yPos);
-      yPos += 7;
-    });
-    yPos += 10;
-
-    // Áreas de mejora
-    pdf.text('Áreas de Mejora:', 20, yPos);
-    yPos += 10;
-
-    const improvements = [
-      'Incrementar ejemplos prácticos',
-      'Ajustar el ritmo de las clases',
-      'Mejorar la comunicación en temas complejos',
-    ];
-
-    improvements.forEach(line => {
-      pdf.text(`• ${line}`, 30, yPos);
-      yPos += 7;
-    });
-    yPos += 10;
-
-    // Conclusiones
-    pdf.text('Conclusiones:', 20, yPos);
-    yPos += 10;
-
-    const conclusions = [
-      'El docente muestra un desempeño general muy positivo',
-      'Los estudiantes valoran especialmente la metodología',
-      'Se recomienda implementar más ejercicios prácticos',
-    ];
-
-    conclusions.forEach(line => {
-      pdf.text(`• ${line}`, 30, yPos);
-      yPos += 7;
-    });
-
-    // Añade gráficos al PDF
-    const charts = document.querySelectorAll('canvas');
-    charts.forEach((canvas) => {
-      if (yPos > 250) {
-        pdf.addPage();
-        yPos = 20;
-      }
-      const imgData = canvas.toDataURL('image/png');
-      pdf.addImage(imgData, 'PNG', 20, yPos, 170, 80);
-      yPos += 90;
-    });
-
-    pdf.save(`informe-${selectedTeacher}.pdf`); // Guarda el PDF con el nombre del docente seleccionado
+  const pieDataCurso = {
+    labels: ['Positivos', 'Neutrales', 'Negativos'],
+    datasets: [
+      {
+        data: [sentimientosCurso.positivo, sentimientosCurso.neutral, sentimientosCurso.negativo],
+        backgroundColor: ['#4CAF50', '#FFEB3B', '#F44336'],
+      },
+    ],
   };
 
+  // Datos para las gráficas de barras horizontales
+  const barDataDocente = {
+    labels: ['Positivo', 'Neutral', 'Negativo'],
+    datasets: [
+      {
+        label: '%',
+        data: [
+          Math.round((sentimientosDocente.positivo * 100) / evaluaciones.length),
+          Math.round((sentimientosDocente.neutral * 100) / evaluaciones.length),
+          Math.round((sentimientosDocente.negativo * 100) / evaluaciones.length),
+        ],
+        backgroundColor: ['#4CAF50', '#FFEB3B', '#F44336'],
+        barThickness: 20,
+      },
+    ],
+  };
+
+  const barDataCurso = {
+    labels: ['Positivo', 'Neutral', 'Negativo'],
+    datasets: [
+      {
+        label: '%',
+        data: [
+          Math.round((sentimientosCurso.positivo * 100) / evaluaciones.length),
+          Math.round((sentimientosCurso.neutral * 100) / evaluaciones.length),
+          Math.round((sentimientosCurso.negativo * 100) / evaluaciones.length),
+        ],
+        backgroundColor: ['#4CAF50', '#FFEB3B', '#F44336'],
+        barThickness: 20,
+      },
+    ],
+  };
+
+  // 6) Descargar Excel global
   const descargarExcelAdmin = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/reportes/admin/excel");
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
+      const res = await fetch('http://localhost:5000/api/reportes/admin/excel', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error('Error al generar Excel');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
       a.href = url;
-      a.download = `reporte_admin_evaluaciones.xlsx`;
+      a.download = 'reporte_admin_evaluaciones.xlsx';
+      document.body.appendChild(a);
       a.click();
       a.remove();
-    } catch (error) {
-      console.error("Error al descargar el Excel del admin:", error);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(err);
+      alert('No se pudo descargar el Excel');
     }
+  };
+
+  // 7) Descargar PDF específico
+  const descargarPDF = () => {
+    if (!selectedTeacher || !selectedCourse) {
+      return alert('Seleccione un curso primero.');
+    }
+
+    // Encuentra el docente y curso seleccionados para obtener sus IDs
+    const docente = docentesConCursos.find(d => d.nombre === selectedTeacher);
+    const curso = docente?.cursos.find(c => c.nombre === selectedCourse);
+
+    if (!docente || !curso) {
+      return alert('Docente o curso no encontrados.');
+    }
+
+    fetch(
+      `http://localhost:5000/api/reportes/docente/${docente.docente_id}/curso/${curso.id}/pdf`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    )
+      .then(res => {
+        if (!res.ok) throw new Error('Error al generar el PDF');
+        return res.blob();
+      })
+      .then(blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `reporte_docente_${docente.nombre}_curso_${curso.nombre}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      })
+      .catch(err => {
+        console.error(err);
+        alert('No se pudo descargar el informe. Intente de nuevo más tarde.');
+      });
   };
 
 
 
   return (
-    <div className="space-y-8">
-      {/* Selección de docente */}
-      <section className="bg-white rounded-lg shadow-md p-6">
-        {/* Título */}
-        <div className="text-center text-2xl font-bold mb-10">
-          <h1>Estadísticas de la Autoevaluación al Docente</h1>
-          <h2 className="text-lg font-semibold text-gray-500">
-            realizado por los estudiantes
-          </h2>
-        </div>
+    <div className="space-y-6 p-4 rounded-lg ">
+      {/* Introducción */}
+      <div className="rounded-lg shadow p-6 text-center bg-white ">
+        <h2 className="text-2xl font-bold mb-2 text-blue-800">
+          Evaluaciones Docentes
+        </h2>
+        <p className="text-xl text-gray-700">
+          Bienvenido al panel de administración del sistema de evaluación
+          docente. Aquí podrá visualizar los resultados de las evaluaciones
+          realizadas por los estudiantes, incluyendo análisis de comentarios y
+          gráficos estadísticos.
+        </p>
+        <p className="mt-4 text-lg text-gray-700 font-semibold">
+          Puede descargar un reporte general con todas las evaluaciones
+          disponibles hasta la fecha.
+        </p>
 
-        {/* Búsqueda de docentes */}
-        <h2 className="text-xl font-semibold mb-4">Docentes Matriculados</h2>
-        <input
-          type="text"
-          placeholder="Buscar docente..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          onKeyDown={handleKeyDown}
-          className="mb-4 p-2 border rounded-lg w-full"
-        />
-        {searchTerm && (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {filteredTeachers.map((teacher) => (
-              <button
-                key={teacher}
-                onClick={() => setSelectedTeacher(teacher)}
-                className={`p-4 rounded-lg border transition-all ${selectedTeacher === teacher
-                  ? "border-blue-500 bg-blue-50"
-                  : "border-gray-200 hover:border-blue-300"
-                  }`}
-              >
-                <h3 className="font-medium">{teacher}</h3>
-                <p className="text-sm text-gray-500 mt-1">Ver estadísticas</p>
-              </button>
-            ))}
-          </div>
-        )}
-      </section>
+        <button
+          onClick={descargarExcelAdmin}
+          className="mt-6 px-6 py-3 bg-green-600 text-white rounded-md shadow hover:bg-green-700 transition"
+        >
+          Descargar Excel
+        </button>
+      </div>
+
+      {/* Selección de docente y curso */}
+      <div>
+        <label className={`block font-semibold mb-1 ${isDarkMode ? 'text-white' : 'text-black'}`}>
+          Docente:
+        </label>
+        <select
+          value={selectedTeacher}
+          onChange={e => {
+            setSelectedTeacher(e.target.value);
+            setSelectedCourse('');
+            setMostrarEvaluaciones(false);
+          }}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+        >
+          <option value="">Seleccione un docente</option>
+          {docentesConCursos.map(docente => (
+            <option key={docente.docente_id} value={docente.nombre}>
+              {docente.nombre}
+            </option>
+          ))}
+        </select>
+      </div>
 
       {selectedTeacher && (
+        <div>
+          <label className={`block font-semibold mb-1 ${isDarkMode ? 'text-white' : 'text-black'}`}>
+            Curso:
+          </label>
+          <select
+            value={selectedCourse}
+            onChange={e => setSelectedCourse(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+          >
+            <option value="">Seleccione un curso</option>
+            {docentesConCursos
+              .find(d => d.nombre === selectedTeacher)
+              ?.cursos.map(curso => (
+                <option key={curso.id} value={curso.nombre}>
+                  {curso.nombre}
+                </option>
+              ))}
+          </select>
+        </div>
+      )}
+
+      {selectedTeacher && selectedCourse && (
+        <div className="flex flex-wrap gap-4 items-center justify-center ">
+          <button
+            onClick={obtenerEvaluaciones}
+            className="px-4 py-2 bg-blue-700 item-center text-white rounded-md hover:bg-gray-400 hover:text-blue-700 transition "
+          >
+            Ver Evaluaciones
+          </button>
+        </div>
+      )}
+
+      {selectedTeacher && selectedCourse && (
+        <div className="flex flex-wrap gap-4 items-center justify-center">
+          <button
+            onClick={descargarPDF}
+            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition"
+          >
+            Descargar PDF
+          </button>
+        </div>
+      )}
+
+      {/* Gráfico Aspectos dl curso*/}
+      {mostrarEvaluaciones && evaluaciones.length > 0 && (
         <>
-          {/* Botón para descargar el informe */}
-          <div className="flex justify-end">
-            <button
-              onClick={generatePDFReport}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-            >
-              <FileDown className="h-5 w-5" />
-              Descargar Informe Completo en PDF
-            </button>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Contenedor 1: Aspectos del Curso */}
+            <div className="bg-white rounded shadow p-4 h-[350px] flex justify-center items-center overflow-hidden">
+              <div className="flex flex-col justify-center items-center w-full">
+                <h3 className="text-center font-semibold mb-0 text-xl md:text-xl ">
+                  Aspectos del Curso
+                </h3>
+                <div className="w-[140%] h-[300px] md:h-[300px] flex justify-center items-center">
+                  <Doughnut
+                    data={{
+                      labels: cursoLabels,
+                      datasets: [
+                        {
+                          data: cursoPromedios,
+                          backgroundColor: [
+                            "#36A2EB",
+                            "#4BC0C0",
+                            "#9966FF",
+                            "#FF9F40",
+                          ],
+                        },
+                      ],
+                    }}
+                    options={donutOptions}
+                  />
+                </div>
+              </div>
+            </div>
 
-            <button
-              onClick={descargarExcelAdmin}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors ml-4"
-            >
-              <FileDown className="h-5 w-5" />
-              Descargar Todas las Evaluaciones en Excel
-            </button>
+            {/* Contenedor 2: Aspectos del Docente */}
+            <div className="bg-white rounded shadow p-4 h-[350px] flex justify-center items-center overflow-hidden">
+              <div className="flex flex-col justify-center items-center w-full">
+                <h3 className="text-center font-semibold md:mb-[0px] text-xl md:text-xl">
+                  Aspectos del Docente
+                </h3>
+                <div className="w-[140%] h-[300px] md:h-[300px] flex justify-center items-center">
+                  <Doughnut
+                    data={{
+                      labels: docenteLabels,
+                      datasets: [
+                        {
+                          data: docentePromedios,
+                          backgroundColor: [
+                            "#FF6384",
+                            "#FFCD56",
+                            "#4BC0C0",
+                            "#36A2EB",
+                            "#9966FF",
+                          ],
+                        },
+                      ],
+                    }}
+                    options={donutOptions}
+                  />
+                </div>
+              </div>
+            </div>
 
-
+            {/* Contenedor 3: Comparación de Promedios */}
+            <div className="bg-white rounded shadow p-4 h-[350px] flex justify-center items-center overflow-hidden">
+              <div className=" w-full">
+                <div>
+                  <h3 className="text-center font-semibold mb-0 text-xl md:text-xl">
+                    Comparación de Promedios
+                  </h3>
+                </div>
+                <div className="w-[102%] h-[300px] md:h-[300px] flex justify-center items-center">
+                  <Bar
+                    data={barData}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: { legend: { display: false } },
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* Cuadro de mando */}
-          <div className="grid grid-cols-12 gap-6">
-            {/* Fila superior - Tres gráficos de líneas */}
-            <div className="col-span-4 bg-white rounded-lg shadow p-8 h-[200px]">
-              <h3 className="text-lg font-semibold mb-1 text-center">
-                Satisfacción General
-              </h3>
-              <div className="h-full">
-                <Line
-                  data={lineChartData1}
-                  options={chartOptions}
-                  id="satisfaction-chart"
-                />
-              </div>
-            </div>
-            <div className="col-span-4 bg-white rounded-lg shadow p-8 h-[200px]">
-              <h3 className="text-lg font-semibold mb-1 text-center">
-                Participación Estudiantil
-              </h3>
-              <div className="h-full">
-                <Line
-                  data={lineChartData2}
-                  options={chartOptions}
-                  id="participation-chart"
-                />
-              </div>
-            </div>
-            <div className="col-span-4 bg-white rounded-lg shadow p-8 h-[200px]">
-              <h3 className="text-lg font-semibold mb-1 text-center">
-                Calidad del Material
-              </h3>
-              <div className="h-full">
-                <Line
-                  data={lineChartData3}
-                  options={chartOptions}
-                  id="quality-chart"
-                />
-              </div>
-            </div>
+          {/* Gráficas de sentimientos y comentarios */}
+          {mostrarEvaluaciones && evaluaciones.length > 0 && (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Gráfica de sentimientos del docente */}
+                <div className="bg-white rounded shadow p-4 h-[400px] flex flex-col justify-center items-center overflow-hidden">
+                  <h4 className="text-center text-lg md:text-xl font-semibold mb-4">
+                    Sentimientos Comentarios al Docente
+                  </h4>
+                  <div className="w-[110%] h-[250px] md:h-[300px]">
+                    <Pie
+                      data={pieDataDocente}
+                      options={{
+                        responsive: true,
+                        maintainAspectRatio: false, // Permite que la gráfica se adapte al contenedor
+                        plugins: { legend: { position: "bottom" } },
+                      }}
+                    />
+                  </div>
+                  <div className="w-[100%] h-[200px] md:h-[250px] mt-4">
+                    <Bar
+                      data={barDataDocente}
+                      options={{
+                        indexAxis: "y",
+                        maintainAspectRatio: false, // Permite que la gráfica se adapte al contenedor
+                        scales: {
+                          x: {
+                            max: 100,
+                            title: { display: true, text: "Porcentaje (%)" },
+                          },
+                        },
+                        plugins: { legend: { display: false } },
+                      }}
+                    />
+                  </div>
+                </div>
 
-            {/* Fila del medio - Gráficos de pastel */}
-            <div className="col-span-4 bg-white rounded-lg shadow p-9 h-[300px]">
-              <h3 className="text-lg font-semibold mb-1 text-center">
-                Distribución de Aspectos Evaluados
-              </h3>
-              <div className="h-full">
-                <Doughnut
-                  data={pieChartData}
-                  options={pieOptions}
-                  id="aspects-chart"
-                />
+                {/* Gráfica de sentimientos del curso */}
+                <div className="bg-white rounded shadow p-4 h-[400px] flex flex-col justify-center items-center overflow-hidden">
+                  <h4 className="text-center text-lg md:text-xl font-semibold mb-4">
+                    Sentimientos Comentarios del Curso
+                  </h4>
+                  <div className="w-[110%] h-[250px] md:h-[300px]">
+                    <Pie
+                      data={pieDataCurso}
+                      options={{
+                        responsive: true,
+                        maintainAspectRatio: false, // Permite que la gráfica se adapte al contenedor
+                        plugins: { legend: { position: "bottom" } },
+                      }}
+                    />
+                  </div>
+                  <div className="w-[100%] h-[200px] md:h-[250px] mt-4">
+                    <Bar
+                      data={barDataCurso}
+                      options={{
+                        indexAxis: "y",
+                        maintainAspectRatio: false, // Permite que la gráfica se adapte al contenedor
+                        scales: {
+                          x: {
+                            max: 100,
+                            title: { display: true, text: "Porcentaje (%)" },
+                          },
+                        },
+                        plugins: { legend: { display: false } },
+                      }}
+                    />
+                  </div>
+                </div>
               </div>
-            </div>
-            <div className="col-span-4 bg-white rounded-lg shadow p-8 h-[300px]">
-              <h3 className="text-lg font-semibold mb-2 text-center">
-                Distribución de Comentarios
-              </h3>
-              <div className="h-full">
-                <Doughnut
-                  data={commentsDistributionData}
-                  options={donutOptions}
-                  id="comments-distribution-chart"
-                />
-              </div>
-            </div>
 
-            {/* Sección de comentarios con filtro */}
-            <div className="col-span-12 bg-white rounded-lg shadow p-4">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold">Comentarios</h3>
-                <select
-                  value={selectedCommentType}
-                  onChange={(e) => setSelectedCommentType(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                >
-                  <option value="all">Todos</option>
-                  <option value="positive">Positivos</option>
-                  <option value="neutral">Neutrales</option>
-                  <option value="negative">Negativos</option>
-                </select>
-              </div>
-              <div className="space-y-3">
-                {getFilteredComments().map((comment, index) => (
-                  <div
-                    key={index}
-                    className={`p-4 border rounded-md ${comment.type === "positive"
-                      ? "bg-green-50"
-                      : comment.type === "neutral"
-                        ? "bg-yellow-50"
-                        : "bg-red-50"
-                      }`}
-                  >
-                    <p className="text-gray-700">{comment.text}</p>
-                    <div className="mt-2 flex items-center">
-                      <span className="text-sm text-gray-500">
-                        Frecuencia: {comment.frequency}
-                      </span>
-                      <span className="mx-2 text-gray-300">|</span>
-                      <span
-                        className={`text-sm font-medium ${comment.type === "positive"
-                          ? "text-green-600"
-                          : comment.type === "neutral"
-                            ? "text-yellow-600"
-                            : "text-red-600"
+              {/* Listado de comentarios */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Comentarios del docente */}
+                <div className="bg-blue-50 rounded p-4">
+                  <div className="flex justify-between mb-2">
+                    <h5 className="font-semibold">Comentarios del Docente</h5>
+                    <select
+                      className="border rounded px-2 py-1"
+                      value={filtroDocente}
+                      onChange={(e: ChangeEvent<HTMLSelectElement>) =>
+                        setFiltroDocente(
+                          e.target.value as
+                          | "todos"
+                          | "positivo"
+                          | "neutral"
+                          | "negativo"
+                        )
+                      }
+                    >
+                      <option value="todos">Todos</option>
+                      <option value="positivo">Positivos</option>
+                      <option value="neutral">Neutrales</option>
+                      <option value="negativo">Negativos</option>
+                    </select>
+                  </div>
+                  <div className="space-y-3 max-h-64 overflow-auto">
+                    {filtrarComentarios("docente", filtroDocente).map(
+                      (com, i) => (
+                        <div
+                          key={i}
+                          className={`p-3 rounded ${com.sentimiento === "positivo"
+                            ? "bg-green-50"
+                            : com.sentimiento === "neutral"
+                              ? "bg-yellow-50"
+                              : "bg-red-50"
+                            }`}
+                        >
+                          <p>{com.texto}</p>
+                          <small className="text-gray-600">
+                            Sentimiento: {com.sentimiento}
+                          </small>
+                        </div>
+                      )
+                    )}
+                  </div>
+                </div>
+
+                {/* Comentarios del curso */}
+                <div className="bg-blue-50 rounded p-4">
+                  <div className="flex justify-between mb-2">
+                    <h5 className="font-semibold">Comentarios del Curso</h5>
+                    <select
+                      className="border rounded px-2 py-1"
+                      value={filtroCurso}
+                      onChange={(e: ChangeEvent<HTMLSelectElement>) =>
+                        setFiltroCurso(
+                          e.target.value as
+                          | "todos"
+                          | "positivo"
+                          | "neutral"
+                          | "negativo"
+                        )
+                      }
+                    >
+                      <option value="todos">Todos</option>
+                      <option value="positivo">Positivos</option>
+                      <option value="neutral">Neutrales</option>
+                      <option value="negativo">Negativos</option>
+                    </select>
+                  </div>
+                  <div className="space-y-3 max-h-64 overflow-auto">
+                    {filtrarComentarios("curso", filtroCurso).map((com, i) => (
+                      <div
+                        key={i}
+                        className={`p-3 rounded ${com.sentimiento === "positivo"
+                          ? "bg-green-50"
+                          : com.sentimiento === "neutral"
+                            ? "bg-yellow-50"
+                            : "bg-red-50"
                           }`}
                       >
-                        {comment.type === "positive"
-                          ? "Positivo"
-                          : comment.type === "neutral"
-                            ? "Neutral"
-                            : "Negativo"}
-                      </span>
-                    </div>
+                        <p>{com.texto}</p>
+                        <small className="text-gray-600">
+                          Sentimiento: {com.sentimiento}
+                        </small>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                </div>
               </div>
-            </div>
-          </div>
+            </>
+          )}
         </>
       )}
     </div>
   );
-};
+}
 
-export default Administrador; // Exporta el componente Administrador
+

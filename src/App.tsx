@@ -1,58 +1,27 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './pages/Pagina_login';
-import StudentDashboard from './pages/Panel_estudiante';
-import TeacherDashboard from './pages/Panel_docente';
-import AdminDashboard from './pages/Panel_admin';
+import PanelEstudiante from './pages/Panel_estudiante';
+import PanelDocente from './pages/Panel_docente';
+import PanelAdmin from './pages/Panel_admin'; // si lo tienes
 import { useAuthStore } from './stores/Autenticacion';
 
 function App() {
-  const { isAuthenticated, userRole } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
 
   return (
     <Router>
       <Routes>
-        <Route 
-          path="/" 
-          element={
-            isAuthenticated ? (
-              <Navigate 
-                to={`/${userRole}`} 
-                replace 
-              />
-            ) : (
-              <LoginPage />
-            )
-          } 
+        <Route path="/" element={<LoginPage />} />
+
+        <Route path="/panel-estudiante" element={<PanelEstudiante />} />
+
+        <Route
+          path="/panel-docente"
+          element={isAuthenticated ? <PanelDocente /> : <Navigate to="/" />}
         />
-        <Route 
-          path="/student" 
-          element={
-            isAuthenticated && userRole === 'student' ? (
-              <StudentDashboard />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          } 
-        />
-        <Route 
-          path="/teacher" 
-          element={
-            isAuthenticated && userRole === 'teacher' ? (
-              <TeacherDashboard />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          } 
-        />
-        <Route 
-          path="/admin" 
-          element={
-            isAuthenticated && userRole === 'admin' ? (
-              <AdminDashboard />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          } 
+        <Route
+          path="/panel-admin"
+          element={isAuthenticated ? <PanelAdmin /> : <Navigate to="/" />}
         />
       </Routes>
     </Router>
