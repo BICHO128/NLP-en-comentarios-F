@@ -477,8 +477,8 @@ export default function Administrador() {
                 }
               `}
               >
-                <div className="flex flex-col items-center justify-center w-full hover:scale-105 focus:scale-105 duration-300">
-                  <h3 className="mt-4 mb-1 text-xl font-semibold text-center md:text-2xl ">
+                <div className="flex flex-col items-center justify-center w-full">
+                  <h3 className="mb-0 text-xl font-semibold text-center md:text-xl ">
                     Aspectos del Curso
                   </h3>
                   <div className="w-[140%] h-[300px] md:h-[300px] flex justify-center items-center">
@@ -504,16 +504,9 @@ export default function Administrador() {
               </div>
 
               {/* Contenedor 2: Aspectos del Docente */}
-              <div className={`rounded-3xl p-4 h-[350px] flex justify-center items-center overflow-hidden transition-all hover:scale-105 focus:scale-105 duration-300 bg-gradient-to-br from-blue-200 via-white to-blue-200
-            border border-blue-300 shadow-blue-200 shadow-lg
-                  ${isDarkMode
-                  ? "bg-gray-900 border-blue-500 text-blue-900"
-                  : "text-blue-900"
-                }
-            `}
-              >
-                <div className="flex flex-col items-center justify-center w-full hover:scale-105 focus:scale-105 duration-300">
-                  <h3 className="mt-4 mb-1 text-xl font-semibold text-center md:text-2xl ">
+              <div className="bg-white rounded shadow p-4 h-[350px] flex justify-center items-center overflow-hidden">
+                <div className="flex flex-col items-center justify-center w-full">
+                  <h3 className="text-center font-semibold md:mb-[0px] text-xl md:text-xl">
                     Aspectos del Docente
                   </h3>
                   <div className="w-[140%] h-[300px] md:h-[300px] flex justify-center items-center">
@@ -540,18 +533,10 @@ export default function Administrador() {
               </div>
 
               {/* Contenedor 3: Comparación de Promedios */}
-              <div className={`bg-white rounded-3xl p-4 h-[350px] flex justify-center items-center overflow-hidden hover:scale-105 focus:scale-105 duration-300
-              bg-gradient-to-br from-blue-200 via-white to-blue-200
-              border border-blue-300 shadow-blue-200 shadow-lg
-                  ${isDarkMode
-                  ? "bg-gray-900 border-blue-500 text-blue-900"
-                  : "text-blue-900"
-                }
-              `}
-              >
-                <div className="w-full hover:scale-105 focus:scale-105 duration-300">
+              <div className="bg-white rounded shadow p-4 h-[350px] flex justify-center items-center overflow-hidden">
+                <div className="w-full ">
                   <div>
-                    <h3 className="mt-2 mb-0 text-xl font-semibold text-center md:text-2xl ">
+                    <h3 className="mb-0 text-xl font-semibold text-center md:text-xl">
                       Comparación de Promedios
                     </h3>
                   </div>
@@ -572,16 +557,8 @@ export default function Administrador() {
             {/* Gráficas de sentimientos y comentarios */}
             <div className="grid grid-cols-1 gap-6 mt-8 md:grid-cols-2">
               {/* Gráfica de sentimientos del docente */}
-              <div className={`bg-white rounded-3xl p-4 h-[400px] flex flex-col justify-center items-center overflow-hidden hover:scale-105 focus:scale-105 duration-300
-                bg-gradient-to-br from-blue-200 via-white to-blue-200
-              border border-blue-300 shadow-blue-200 shadow-lg
-                  ${isDarkMode
-                  ? "bg-gray-900 border-blue-500 text-blue-900"
-                  : "text-blue-900"
-                }
-              `}
-              >
-                <h4 className="mt-3 mb-1 text-xl font-semibold text-center md:text-2xl ">
+              <div className="bg-white rounded shadow p-4 h-[400px] flex flex-col justify-center items-center overflow-hidden">
+                <h4 className="mb-4 text-lg font-semibold text-center md:text-xl">
                   Sentimientos Comentarios al Docente
                 </h4>
                 <div className="w-[110%] h-[250px] md:h-[300px]">
@@ -613,16 +590,8 @@ export default function Administrador() {
               </div>
 
               {/* Gráfica de sentimientos del curso */}
-              <div className={`bg-white rounded-3xl p-4 h-[400px] flex flex-col justify-center items-center overflow-hidden hover:scale-105 focus:scale-105 duration-300
-                bg-gradient-to-br from-blue-200 via-white to-blue-200
-              border border-blue-300 shadow-blue-200 shadow-lg
-                  ${isDarkMode
-                  ? "bg-gray-900 border-blue-500 text-blue-900"
-                  : "text-blue-900"
-                }
-              `}
-              >
-                <h4 className="mt-3 mb-1 text-lg font-semibold text-center md:text-2xl">
+              <div className="bg-white rounded shadow p-4 h-[400px] flex flex-col justify-center items-center overflow-hidden">
+                <h4 className="mb-4 text-lg font-semibold text-center md:text-xl">
                   Sentimientos Comentarios del Curso
                 </h4>
                 <div className="w-[110%] h-[250px] md:h-[300px]">
@@ -657,117 +626,34 @@ export default function Administrador() {
             {/* Listado de comentarios */}
             <div className="grid grid-cols-1 gap-6 mt-8 md:grid-cols-2">
               {/* Comentarios del docente */}
-              <div className="group-docente hover:scale-105 focus:scale-105 duration-300">
-                <div className={`p-4 transition-all duration-300 bg-white dark:white rounded-3xl animate-fade-in-docente
-                  bg-gradient-to-br from-blue-200 via-white to-blue-200
-              border border-blue-300 shadow-blue-200 shadow-lg
-                  ${isDarkMode
-                    ? "bg-gray-900 border-blue-500 text-blue-900"
-                    : "text-blue-900"
-                  }
-              `}
-                >
-                  <div className="flex justify-between mb-2">
-                    <h5 className="text-2xl font-semibold">
-                      Comentarios del Docente
-                    </h5>
-                    <select
-                      className={`
-                          border rounded-2xl px-2 py-2 font-medium cursor-pointer
-                          transition-all duration-200
-                          hover:scale-110 focus:scale-110 hover:shadow-lg focus:shadow-lg
-                          ${isDarkMode
-                          ? "bg-gray-700 border-blue-400 text-white"
-                          : "bg-white border-blue-300 text-blue-600"
-                        }
-                        `}
-                      value={filtroDocente}
-                      onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-                        setFiltroDocente(
-                          e.target.value as
-                          | "todos"
-                          | "positivo"
-                          | "neutral"
-                          | "negativo"
-                        )
-                      }
-                    >
-                      <option value="todos">Todos</option>
-                      <option value="positivo">Positivos</option>
-                      <option value="neutral">Neutrales</option>
-                      <option value="negativo">Negativos</option>
-                    </select>
-                  </div>
-                  <div className="space-y-3 overflow-auto max-h-72 text-lg">
-                    {filtrarComentarios("docente", filtroDocente).map(
-                      (com, i) => (
-                        <div
-                          key={i}
-                          className={`p-3 rounded-3xl ${com.sentimiento === "positivo"
-                            ? "bg-green-50"
-                            : com.sentimiento === "neutral"
-                              ? "bg-yellow-50"
-                              : "bg-red-50"
-                            }`}
-                        >
-                          <p>{com.texto}</p>
-                          <small className="text-gray-600 text-base">
-                            Sentimiento: {com.sentimiento}
-                          </small>
-                        </div>
+              <div className="p-4 rounded bg-blue-50">
+                <div className="flex justify-between mb-2">
+                  <h5 className="font-semibold">Comentarios del Docente</h5>
+                  <select
+                    className="px-2 py-1 border rounded"
+                    value={filtroDocente}
+                    onChange={(e: ChangeEvent<HTMLSelectElement>) =>
+                      setFiltroDocente(
+                        e.target.value as
+                        | "todos"
+                        | "positivo"
+                        | "neutral"
+                        | "negativo"
                       )
-                    )}
-                  </div>
+                    }
+                  >
+                    <option value="todos">Todos</option>
+                    <option value="positivo">Positivos</option>
+                    <option value="neutral">Neutrales</option>
+                    <option value="negativo">Negativos</option>
+                  </select>
                 </div>
-              </div>
-
-              {/* Comentarios del curso */}
-              <div className="group-curso hover:scale-105 focus:scale-105 duration-300">
-                <div className={`p-4 transition-all duration-300 bg-white dark:bg-white rounded-3xl animate-fade-in-curso
-                  bg-gradient-to-br from-blue-200 via-white to-blue-200
-              border border-blue-300 shadow-blue-200 shadow-lg
-                  ${isDarkMode
-                    ? "bg-gray-900 border-blue-500 text-blue-900"
-                    : "text-blue-900"
-                  }
-              `}
-                >
-                  <div className="flex justify-between mb-2">
-                    <h5 className="text-2xl font-semibold">
-                      Comentarios del Curso
-                    </h5>
-                    <select
-                      className={`
-                          border rounded-2xl px-2 py-2 font-medium cursor-pointer
-                          transition-all duration-200
-                          hover:scale-110 focus:scale-110 hover:shadow-lg focus:shadow-lg
-                          ${isDarkMode
-                          ? "bg-gray-700 border-blue-400 text-white"
-                          : "bg-white border-blue-300 text-blue-600"
-                        }
-                        `}
-                      value={filtroCurso}
-                      onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-                        setFiltroCurso(
-                          e.target.value as
-                          | "todos"
-                          | "positivo"
-                          | "neutral"
-                          | "negativo"
-                        )
-                      }
-                    >
-                      <option value="todos">Todos</option>
-                      <option value="positivo">Positivos</option>
-                      <option value="neutral">Neutrales</option>
-                      <option value="negativo">Negativos</option>
-                    </select>
-                  </div>
-                  <div className="space-y-3 overflow-auto max-h-72 text-lg">
-                    {filtrarComentarios("curso", filtroCurso).map((com, i) => (
+                <div className="space-y-3 overflow-auto max-h-64">
+                  {filtrarComentarios("docente", filtroDocente).map(
+                    (com, i) => (
                       <div
                         key={i}
-                        className={`p-3 rounded-3xl ${com.sentimiento === "positivo"
+                        className={`p-3 rounded ${com.sentimiento === "positivo"
                           ? "bg-green-50"
                           : com.sentimiento === "neutral"
                             ? "bg-yellow-50"
@@ -775,12 +661,55 @@ export default function Administrador() {
                           }`}
                       >
                         <p>{com.texto}</p>
-                        <small className="text-gray-600 text-base">
+                        <small className="text-gray-600">
                           Sentimiento: {com.sentimiento}
                         </small>
                       </div>
-                    ))}
-                  </div>
+                    )
+                  )}
+                </div>
+              </div>
+
+              {/* Comentarios del curso */}
+              <div className="p-4 rounded bg-blue-50">
+                <div className="flex justify-between mb-2">
+                  <h5 className="font-semibold">Comentarios del Curso</h5>
+                  <select
+                    className="px-2 py-1 border rounded"
+                    value={filtroCurso}
+                    onChange={(e: ChangeEvent<HTMLSelectElement>) =>
+                      setFiltroCurso(
+                        e.target.value as
+                        | "todos"
+                        | "positivo"
+                        | "neutral"
+                        | "negativo"
+                      )
+                    }
+                  >
+                    <option value="todos">Todos</option>
+                    <option value="positivo">Positivos</option>
+                    <option value="neutral">Neutrales</option>
+                    <option value="negativo">Negativos</option>
+                  </select>
+                </div>
+                <div className="space-y-3 overflow-auto max-h-64">
+                  {filtrarComentarios("curso", filtroCurso).map((com, i) => (
+                    <div
+                      key={i}
+                      className={`p-3 rounded ${com.sentimiento === "positivo"
+                        ? "bg-green-50"
+                        : com.sentimiento === "neutral"
+                          ? "bg-yellow-50"
+                          : "bg-red-50"
+                        }`}
+                    >
+                      <p>{com.texto}</p>
+                      <small className="text-gray-600">
+                        Sentimiento: {com.sentimiento}
+                      </small>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>

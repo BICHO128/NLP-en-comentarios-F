@@ -9,10 +9,11 @@ import { useNavigate } from 'react-router-dom';
 
 const PanelDocente = () => {
   const { logout, user } = useAuthStore();
-  const [showProfile, setShowProfile] = useState(false);
   const [redirectReason, setRedirectReason] = useState<'reload' | 'logout' | null>(null); // Estado para la razón de redirección
   const { isDarkMode } = useDarkMode();
   const navigate = useNavigate();
+
+
 
   useEffect(() => {
     if (!user && redirectReason) {
@@ -32,10 +33,10 @@ const PanelDocente = () => {
     }
   }, [user, navigate, redirectReason]);
 
-  const handleLogout = () => {
-    setRedirectReason('logout'); // Establece la razón como cierre de sesión
-    logout(); // Llama a la función de cierre de sesión
-  };
+  function handleLogout(): void {
+    logout(); // Llama a la función de logout de tu store
+    setRedirectReason('logout'); // Opcional: para mostrar el mensaje de sesión cerrada
+  }
 
   if (!user) {
     return (
@@ -56,43 +57,42 @@ const PanelDocente = () => {
     );
   }
 
-  const handleProfileClick = () => {
-    setShowProfile(!showProfile);
-  };
 
   return (
-    <div className={`min-h-screen flex flex-col ${isDarkMode ? 'bg-gradient-to-b from-black via-blue-400 to-white' : 'bg-white'}`}>
-      {/* Header */}
-      <Header onProfileClick={handleProfileClick} />
+    <div className={`min-h-screen flex flex-col ${isDarkMode ? 'bg-gradient-to-b from-black via-blue-400 to-white' : 'bg-white'
+      }`}
+    >
 
-      {/* Boton Perfil Info */}
-      {showProfile && (
+      {/* Header */}
+      <Header onLogout={handleLogout} />
+
+      {user && (
         <div
-          className="absolute top-0 left-0 w-full h-full bg-black bg-opacity-90 flex justify-end items-start pt-16"
-          onClick={() => setShowProfile(false)}
+          className={`
+          relative z-20 w-full max-w-3xl mx-auto
+            bg-gradient-to-br from-blue-200 via-white to-blue-100
+            border border-blue-300 rounded-2xl shadow-xl p-6 mt-10
+            transition-all duration-800 hover:shadow-blue-200 hover:scale-[2.01] animate-fade-in
+          ${isDarkMode ? "bg-gray-900 border-gray-700 text-blue-900" : "text-blue-900"}
+        `}
         >
-          <div
-            className="bg-white shadow-lg rounded-lg p-4 opacity-80"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 className="text-xl font-bold mb-2 text-center">Información Personal</h2>
-            <p>
-              <strong>Nombre:</strong> {user?.username || 'Administrador'}
+          <div className='hover:scale-110 focus:scale-110 duration-300'>
+            <h2 className="text-3xl font-bold mb-6 text-center">
+              ¡Bienvenido(a), {user.username}!
+            </h2>
+            <p className="text-center mb-10 text-xl/5 text-blue-800 dark:text-blue-800">
+              Aquí puedes consultar y analizar las evaluaciones recibidas de tus estudiantes.
             </p>
-            <p>
-              <strong>Correo Institucional:</strong> {user?.email || 'admin@uniautonoma.edu.co'}
+            <ul className="text-center text-lg/5 text-blue-800 dark:text-gray-500 mb-12">
+              <li> Solo tú puedes ver los resultados de tus evaluaciones.</li>
+            </ul>
+            <p className="text-center text-base text-gray-800 dark:text-gray-800">
+              Si tienes dudas, contacta a soporte académico.
             </p>
-            <div className="flex items-center space-x-4 justify-center mt-4">
-              <button
-                onClick={handleLogout}
-                className="px-2 py-1 text-blue-800 bg-blue-100 hover:bg-blue-400 rounded-full"
-              >
-                Cerrar Sesión
-              </button>
-            </div>
           </div>
         </div>
       )}
+
 
       {/* Main Content */}
       <main className="flex-grow container mx-auto px-4 py-8">

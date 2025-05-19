@@ -13,6 +13,7 @@ import {
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { useAuthStore } from '../stores/Autenticacion';
 import { useDarkMode } from '../hooks/useDarkMode';
+import { FaSyncAlt } from 'react-icons/fa'; // Importa el ícono de recargar
 
 ChartJS.register(
   CategoryScale,
@@ -61,6 +62,8 @@ export default function Docentes() {
   const [mostrarEvaluaciones, setMostrarEvaluaciones] = useState(false);
   const [filtroDocente, setFiltroDocente] = useState<'todos' | 'positivo' | 'neutral' | 'negativo'>('todos');
   const [filtroCurso, setFiltroCurso] = useState<'todos' | 'positivo' | 'neutral' | 'negativo'>('todos');
+  // Estado para manejar la animación de clic
+  const [isReloading, setIsReloading] = useState(false);
 
   // Carga los cursos del docente autenticado
   useEffect(() => {
@@ -261,36 +264,96 @@ export default function Docentes() {
     ],
   };
 
-  return (
-    <div className="space-y-6 p-4 rounded-lg ">
-      {/* Saludo */}
-      <div className="bg-white shadow rounded-lg p-6 text-center">
-        <h2 className="text-2xl font-bold text-blue-800 mb-2">
-          Bienvenido, {user?.username} 🫡
-        </h2>
-        <p className="text-gray-700">
-          Aquí verá las evaluaciones realizadas por sus estudiantes con gráficos
-          y comentarios.
-        </p>
-      </div>
+  {/* // Nueva función para recargar los datos */ }
 
+  const handleRecargarDatos = () => {
+    setIsReloading(true); // Activa la animación
+    recargarDatos(); // Llama a la función para recargar los datos
+    setTimeout(() => setIsReloading(false), 1000); // Desactiva la animación después de 1 segundo
+  };
+
+  const recargarDatos = () => {
+    if (!user) return;
+
+    // Recargar cursos
+    fetch(`http://localhost:5000/api/docentes/${user.id}/cursos`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error('Error al cargar cursos');
+        return res.json();
+      })
+      .then((data: Curso[]) => {
+        setCursos(data);
+      })
+      .catch((err) => {
+        console.error('Error al obtener cursos:', err);
+        setCursos([]);
+      });
+
+    // // Recargar evaluaciones si hay un curso seleccionado
+    if (selectedCourseId) {
+      fetch(
+        `http://localhost:5000/api/evaluaciones/docente/${user.id}/curso/${selectedCourseId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+        .then((res) => {
+          if (!res.ok) throw new Error('Error al cargar evaluaciones');
+          return res.json();
+        })
+        .then((data: Evaluacion[]) => {
+          setEvaluaciones(data);
+          setMostrarEvaluaciones(true);
+        })
+        .catch((err) => {
+          console.error('Error al obtener evaluaciones:', err);
+          setEvaluaciones([]);
+          setMostrarEvaluaciones(false);
+        });
+    }
+  };
+
+  return (
+    <div className="p-4 space-y-6 rounded-3xl ">
       {/* Selector de curso */}
-      <div>
+      <div
+        className={`
+          flex flex-col md:flex-row items-stretch justify-center gap-0
+          bg-gradient-to-br from-blue-100 via-white to-blue-100
+          border border-blue-200 rounded-3xl shadow-lg p-4 mb-8
+          transition-all duration-300 hover:shadow-blue-200 hover:scale-[1.01] animate-fade-in
+          ${isDarkMode ? "bg-gray-800 border-gray-700 shadow-gray-900" : "shadow-blue-200 shadow-lg"}
+        `}
+      >
         <label
-          className={`font-semibold mb-1 block ${isDarkMode ? "text-white" : "text-black"
+          htmlFor="courseSelect"
+          className={`block text-base md:text-xl font-medium mb-1 rounded-3xl ${isDarkMode ? "text-gray-600" : "text-gray-500 "
             }`}
         >
           Seleccione un curso:
         </label>
         <select
-          className="w-full border rounded px-3 py-2"
+          className={`
+            w-full border rounded-3xl px-3 py-2 font-medium cursor-pointer
+            transition-all duration-200
+            hover:scale-105 focus:scale-100 hover:shadow-lg focus:shadow-lg text-xl
+            ${isDarkMode
+              ? "bg-gray-800 border-white text-white placeholder-gray-400 shadow-gray-800 shadow-lg"
+              : "bg-white border-blue-300 text-blue-900 placeholder-gray-500 shadow-blue-200 shadow-lg"
+            }
+          `}
           value={selectedCourseId}
           onChange={(e: ChangeEvent<HTMLSelectElement>) => {
             setSelectedCourseId(e.target.value);
             setMostrarEvaluaciones(false);
           }}
         >
-          <option value="">Elija un curso 😉</option>
+          <option
+            value=""
+            className="text-lg rounded-lg font-semibold text-gray-600"
+          >
+            Elija un curso, para ver sus evaluaciones 😉
+          </option>
           {cursos.map((c) => (
             <option key={c.id} value={c.id}>
               {c.nombre}
@@ -299,20 +362,57 @@ export default function Docentes() {
         </select>
       </div>
 
-      {/* Botones Ver / PDF */}
+      {/* // Modificar el botón de recargar */}
       {selectedCourseId && (
-        <div className="flex gap-4 justify-center">
+        <div className="flex items-center justify-center gap-4">
           <button
             onClick={obtenerEvaluaciones}
-            className="px-4 py-2 bg-blue-700 text-white rounded hover:bg-blue-800"
+            className={`
+            px-4 py-2 text-xl rounded-3xl font-semibold shadow-lg
+            transition-all duration-200
+            hover:scale-110 focus:scale-110 hover:shadow-xl focus:shadow-xl
+            ${isDarkMode
+                ? "bg-blue-700 text-white hover:bg-blue-800"
+                : "bg-blue-600 text-white hover:bg-blue-700"
+              }
+          `}
           >
             Ver Evaluaciones
           </button>
+
           <button
             onClick={descargarPDF}
-            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            className={`
+              px-4 py-2 text-xl rounded-3xl font-semibold shadow-lg
+              transition-all duration-200
+              hover:scale-110 focus:scale-110 hover:shadow-xl focus:shadow-xl
+              ${isDarkMode
+                ? "bg-red-700 text-white hover:bg-red-800"
+                : "bg-red-600 text-white hover:bg-red-700"
+              }
+            `}
           >
             Descargar PDF
+          </button>
+
+          {/* Botón de recargar con animación */}
+          <button
+            onClick={() => {
+              setIsReloading(true);
+              handleRecargarDatos();
+              setTimeout(() => setIsReloading(false), 2000);
+            }}
+            className={`
+              relative group w-11 h-11 rounded-full
+              bg-gradient-to-l from-blue-100 to-blue-500 shadow-lg
+              hover:shadow-xl transform hover:scale-125 transition-all duration-300 flex items-center justify-center
+              ${isReloading ? "animate-pulse" : ""}
+            `}
+          >
+            <FaSyncAlt
+              className={`text-white text-xl transition-transform duration-500 ${isReloading ? "animate-spin" : ""
+                }`}
+            />
           </button>
         </div>
       )}
@@ -320,11 +420,20 @@ export default function Docentes() {
       {/* Gráficos principales */}
       {mostrarEvaluaciones && evaluaciones.length > 0 && (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
             {/* Contenedor 1: Aspectos del Curso */}
-            <div className="bg-white rounded shadow p-4 h-[350px] flex justify-center items-center overflow-hidden">
-              <div className="flex flex-col justify-center items-center w-full">
-                <h3 className="text-center font-semibold mb-0 text-xl md:text-xl ">
+
+            <div
+              className={`rounded-3xl p-4 h-[350px] flex justify-center items-center overflow-hidden transition-all duration-300 hover:scale-105 focus:scale-105 bg-gradient-to-br from-blue-200 via-white to-blue-200
+              border border-blue-300 shadow-blue-200 shadow-lg
+                  ${isDarkMode
+                  ? "bg-gray-900 border-blue-500 text-blue-900"
+                  : "text-blue-900"
+                }
+              `}
+            >
+              <div className="flex flex-col items-center justify-center w-full hover:scale-105 focus:scale-105 duration-300">
+                <h3 className="mt-4 mb-1 text-2xl font-semibold text-center md:text-2xl ">
                   Aspectos del Curso
                 </h3>
                 <div className="w-[140%] h-[300px] md:h-[300px] flex justify-center items-center">
@@ -350,9 +459,18 @@ export default function Docentes() {
             </div>
 
             {/* Contenedor 2: Aspectos del Docente */}
-            <div className="bg-white rounded shadow p-4 h-[350px] flex justify-center items-center overflow-hidden">
-              <div className="flex flex-col justify-center items-center w-full">
-                <h3 className="text-center font-semibold md:mb-[0px] text-xl md:text-xl">
+
+            <div
+              className={`rounded-3xl p-4 h-[350px] flex justify-center items-center overflow-hidden transition-all hover:scale-105 focus:scale-105 duration-300 bg-gradient-to-br from-blue-200 via-white to-blue-200
+            border border-blue-300 shadow-blue-200 shadow-lg
+                  ${isDarkMode
+                  ? "bg-gray-900 border-blue-500 text-blue-900"
+                  : "text-blue-900"
+                }
+            `}
+            >
+              <div className="flex flex-col items-center justify-center w-full hover:scale-105 focus:scale-105 duration-300">
+                <h3 className="mt-4 mb-1 text-2xl font-semibold text-center md:text-2xl ">
                   Aspectos del Docente
                 </h3>
                 <div className="w-[140%] h-[300px] md:h-[300px] flex justify-center items-center">
@@ -379,10 +497,18 @@ export default function Docentes() {
             </div>
 
             {/* Contenedor 3: Comparación de Promedios */}
-            <div className="bg-white rounded shadow p-4 h-[350px] flex justify-center items-center overflow-hidden">
-              <div className=" w-full">
+            <div className={`bg-white rounded-3xl p-4 h-[350px] flex justify-center items-center overflow-hidden hover:scale-105 focus:scale-105 duration-300
+              bg-gradient-to-br from-blue-200 via-white to-blue-200
+              border border-blue-300 shadow-blue-200 shadow-lg
+                  ${isDarkMode
+                ? "bg-gray-900 border-blue-500 text-blue-900"
+                : "text-blue-900"
+              }
+              `}
+            >
+              <div className="w-full hover:scale-105 focus:scale-105 duration-300">
                 <div>
-                  <h3 className="text-center font-semibold mb-0 text-xl md:text-xl">
+                  <h3 className="mt-2 mb-0 text-2xl font-semibold text-center md:text-2xl ">
                     Comparación de Promedios
                   </h3>
                 </div>
@@ -403,10 +529,18 @@ export default function Docentes() {
           {/* Gráficas de sentimientos y comentarios */}
           {mostrarEvaluaciones && evaluaciones.length > 0 && (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 ">
                 {/* Gráfica de sentimientos del docente */}
-                <div className="bg-white rounded shadow p-4 h-[400px] flex flex-col justify-center items-center overflow-hidden">
-                  <h4 className="text-center text-lg md:text-xl font-semibold mb-4">
+                <div className={`bg-white rounded-3xl p-4 h-[400px] flex flex-col justify-center items-center overflow-hidden hover:scale-105 focus:scale-105 duration-300
+                bg-gradient-to-br from-blue-200 via-white to-blue-200
+              border border-blue-300 shadow-blue-200 shadow-lg
+                  ${isDarkMode
+                    ? "bg-gray-900 border-blue-500 text-blue-900"
+                    : "text-blue-900"
+                  }
+              `}
+                >
+                  <h4 className="mt-3 mb-1 text-2xl font-semibold text-center md:text-2xl ">
                     Sentimientos Comentarios al Docente
                   </h4>
                   <div className="w-[110%] h-[250px] md:h-[300px]">
@@ -438,8 +572,16 @@ export default function Docentes() {
                 </div>
 
                 {/* Gráfica de sentimientos del curso */}
-                <div className="bg-white rounded shadow p-4 h-[400px] flex flex-col justify-center items-center overflow-hidden">
-                  <h4 className="text-center text-lg md:text-xl font-semibold mb-4">
+                <div className={`bg-white rounded-3xl p-4 h-[400px] flex flex-col justify-center items-center overflow-hidden hover:scale-105 focus:scale-105 duration-300
+                bg-gradient-to-br from-blue-200 via-white to-blue-200
+              border border-blue-300 shadow-blue-200 shadow-lg
+                  ${isDarkMode
+                    ? "bg-gray-900 border-blue-500 text-blue-900"
+                    : "text-blue-900"
+                  }
+              `}
+                >
+                  <h4 className="mt-4 mb-1 text-2xl font-semibold text-center md:text-2xl ">
                     Sentimientos Comentarios del Curso
                   </h4>
                   <div className="w-[110%] h-[250px] md:h-[300px]">
@@ -472,92 +614,134 @@ export default function Docentes() {
               </div>
 
               {/* Listado de comentarios */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Comentarios del docente */}
-                <div className="bg-blue-50 rounded p-4">
-                  <div className="flex justify-between mb-2">
-                    <h5 className="font-semibold">Comentarios del Docente</h5>
-                    <select
-                      className="border rounded px-2 py-1"
-                      value={filtroDocente}
-                      onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-                        setFiltroDocente(
-                          e.target.value as
-                          | "todos"
-                          | "positivo"
-                          | "neutral"
-                          | "negativo"
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                {/* Contenedor independiente para Comentarios del Docente */}
+                <div className="group-docente hover:scale-105 focus:scale-105 duration-300">
+                  <div className={`p-4 transition-all duration-300 bg-white dark:white rounded-3xl animate-fade-in-docente
+                  bg-gradient-to-br from-blue-200 via-white to-blue-200
+              border border-blue-300 shadow-blue-200 shadow-lg
+                  ${isDarkMode
+                      ? "bg-gray-900 border-blue-500 text-blue-900"
+                      : "text-blue-900"
+                    }
+              `}
+                  >
+                    <div className="flex justify-between mb-2">
+                      <h5 className="text-2xl font-semibold">
+                        Comentarios del Docente
+                      </h5>
+                      <select
+                        className={`
+                          border rounded-2xl px-2 py-2 font-medium cursor-pointer
+                          transition-all duration-200
+                          hover:scale-110 focus:scale-110 hover:shadow-lg focus:shadow-lg
+                          ${isDarkMode
+                            ? "bg-gray-700 border-blue-400 text-white"
+                            : "bg-white border-blue-300 text-blue-600"
+                          }
+                        `}
+                        value={filtroDocente}
+                        onChange={(e: ChangeEvent<HTMLSelectElement>) =>
+                          setFiltroDocente(
+                            e.target.value as
+                            | "todos"
+                            | "positivo"
+                            | "neutral"
+                            | "negativo"
+                          )
+                        }
+                      >
+                        <option value="todos">Todos</option>
+                        <option value="positivo">Positivos</option>
+                        <option value="neutral">Neutrales</option>
+                        <option value="negativo">Negativos</option>
+                      </select>
+                    </div>
+                    <div className="space-y-3 overflow-auto max-h-72 text-lg">
+                      {filtrarComentarios("docente", filtroDocente).map(
+                        (com, i) => (
+                          <div
+                            key={i}
+                            className={`p-3 rounded-3xl ${com.sentimiento === "positivo"
+                              ? "bg-green-50"
+                              : com.sentimiento === "neutral"
+                                ? "bg-yellow-50"
+                                : "bg-red-50"
+                              }`}
+                          >
+                            <p>{com.texto}</p>
+                            <small className="text-gray-600 text-base">
+                              Sentimiento: {com.sentimiento}
+                            </small>
+                          </div>
                         )
-                      }
-                    >
-                      <option value="todos">Todos</option>
-                      <option value="positivo">Positivos</option>
-                      <option value="neutral">Neutrales</option>
-                      <option value="negativo">Negativos</option>
-                    </select>
-                  </div>
-                  <div className="space-y-3 max-h-64 overflow-auto">
-                    {filtrarComentarios("docente", filtroDocente).map(
-                      (com, i) => (
-                        <div
-                          key={i}
-                          className={`p-3 rounded ${com.sentimiento === "positivo"
-                            ? "bg-green-50"
-                            : com.sentimiento === "neutral"
-                              ? "bg-yellow-50"
-                              : "bg-red-50"
-                            }`}
-                        >
-                          <p>{com.texto}</p>
-                          <small className="text-gray-600">
-                            Sentimiento: {com.sentimiento}
-                          </small>
-                        </div>
-                      )
-                    )}
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                {/* Comentarios del curso */}
-                <div className="bg-blue-50 rounded p-4">
-                  <div className="flex justify-between mb-2">
-                    <h5 className="font-semibold">Comentarios del Curso</h5>
-                    <select
-                      className="border rounded px-2 py-1"
-                      value={filtroCurso}
-                      onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-                        setFiltroCurso(
-                          e.target.value as
-                          | "todos"
-                          | "positivo"
-                          | "neutral"
-                          | "negativo"
-                        )
-                      }
-                    >
-                      <option value="todos">Todos</option>
-                      <option value="positivo">Positivos</option>
-                      <option value="neutral">Neutrales</option>
-                      <option value="negativo">Negativos</option>
-                    </select>
-                  </div>
-                  <div className="space-y-3 max-h-64 overflow-auto">
-                    {filtrarComentarios("curso", filtroCurso).map((com, i) => (
-                      <div
-                        key={i}
-                        className={`p-3 rounded ${com.sentimiento === "positivo"
-                          ? "bg-green-50"
-                          : com.sentimiento === "neutral"
-                            ? "bg-yellow-50"
-                            : "bg-red-50"
-                          }`}
+                {/* Contenedor independiente para Comentarios del Curso */}
+                <div className="group-curso hover:scale-105 focus:scale-105 duration-300">
+                  <div className={`p-4 transition-all duration-300 bg-white dark:bg-white rounded-3xl animate-fade-in-curso
+                  bg-gradient-to-br from-blue-200 via-white to-blue-200
+              border border-blue-300 shadow-blue-200 shadow-lg
+                  ${isDarkMode
+                      ? "bg-gray-900 border-blue-500 text-blue-900"
+                      : "text-blue-900"
+                    }
+              `}
+                  >
+                    <div className="flex justify-between mb-2">
+                      <h5 className="text-2xl font-semibold">
+                        Comentarios del Curso
+                      </h5>
+                      <select
+                        className={`
+                          border rounded-2xl px-2 py-2 font-medium cursor-pointer
+                          transition-all duration-200
+                          hover:scale-110 focus:scale-110 hover:shadow-lg focus:shadow-lg
+                          ${isDarkMode
+                            ? "bg-gray-700 border-blue-400 text-white"
+                            : "bg-white border-blue-300 text-blue-600"
+                          }
+                        `}
+                        value={filtroCurso}
+                        onChange={(e: ChangeEvent<HTMLSelectElement>) =>
+                          setFiltroCurso(
+                            e.target.value as
+                            | "todos"
+                            | "positivo"
+                            | "neutral"
+                            | "negativo"
+                          )
+                        }
                       >
-                        <p>{com.texto}</p>
-                        <small className="text-gray-600">
-                          Sentimiento: {com.sentimiento}
-                        </small>
-                      </div>
-                    ))}
+                        <option value="todos">Todos</option>
+                        <option value="positivo">Positivos</option>
+                        <option value="neutral">Neutrales</option>
+                        <option value="negativo">Negativos</option>
+                      </select>
+                    </div>
+                    <div className="space-y-3 overflow-auto max-h-72 text-lg">
+                      {filtrarComentarios("curso", filtroCurso).map(
+                        (com, i) => (
+                          <div
+                            key={i}
+                            className={`p-3 rounded-3xl ${com.sentimiento === "positivo"
+                              ? "bg-green-50"
+                              : com.sentimiento === "neutral"
+                                ? "bg-yellow-50"
+                                : "bg-red-50"
+                              }`}
+                          >
+                            <p>{com.texto}</p>
+                            <small className="text-gray-600 text-base">
+                              Sentimiento: {com.sentimiento}
+                            </small>
+                          </div>
+                        )
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>

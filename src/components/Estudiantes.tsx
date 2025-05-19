@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Send } from 'lucide-react';
+import { Send, Loader } from 'lucide-react';
 import axios from 'axios';
 import { useDarkMode } from '../hooks/useDarkMode';
 import { useAuthStore } from '../stores/Autenticacion'; // Importa el hook de autenticación
+import { toast } from 'react-toastify'; // Importar react-toastify
+import 'react-toastify/dist/ReactToastify.css'; // Importar estilos de react-toastify
 
 // Define interfaces para mejor seguridad de tipos
 interface Teacher {
@@ -34,7 +36,10 @@ const Estudiantes = () => {
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [isLoadingCourses, setIsLoadingCourses] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false); // Nuevo estado para manejar el envío
   const { isDarkMode } = useDarkMode();
+  const [isCheckingGrammar, setIsCheckingGrammar] = useState(false); // Estado para manejar la validación gramatical
+  const [grammarErrors, setGrammarErrors] = useState<{ comment?: boolean; courseComment?: boolean }>({});
 
   const [formData, setFormData] = useState<Record<string, string>>({ // Usar Record<string, string>
     satisfaccion_general: '',
@@ -57,6 +62,39 @@ const Estudiantes = () => {
     courseComment?: string;
     studentId?: string; // Para errores relacionados con el ID del estudiante
   }>({});
+
+  // Permite letras, espacios, comas, puntos, signos de exclamación/interrogación y tildes
+  const sanitizeComment = (text: string) =>
+    text.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ ,;".!¡]/g, '');
+
+  // Función para validar ortografía y gramática usando una API externa
+  const validateGrammar = async (text: string): Promise<string | null> => {
+    try {
+      const params = new URLSearchParams();
+      params.append('text', text);
+      params.append('language', 'es');
+
+      const response = await fetch('https://api.languagetool.org/v2/check', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: params
+      });
+
+      if (!response.ok) {
+        return 'No se pudo validar la gramática. Intenta nuevamente.';
+      }
+
+      const data = await response.json();
+      if (data.matches && data.matches.length > 0) {
+        return 'El texto contiene errores gramáticales o de ortografía. Por favor, corrige los errores.';
+      }
+      return null;
+    } catch {
+      return 'No se pudo validar la gramática. Intenta nuevamente.';
+    }
+  };
 
   // --- NUEVO: Mapeo de valores de evaluación a números ---
   const evaluationValueMap: { [key: string]: number } = {
@@ -87,8 +125,7 @@ const Estudiantes = () => {
     axios.get("http://localhost:5000/api/docentes")
       .then(res => setTeachers(res.data))
       .catch(error => {
-        console.error("Error al obtener docentes:", error);
-        alert("Error al cargar la lista de docentes.");
+        toast.error("Error al obtener docentes: " + (error?.message || "Error desconocido"));
       });
   }, []);
 
@@ -101,10 +138,8 @@ const Estudiantes = () => {
       setFormErrors(prev => ({ ...prev, course: undefined }));
       axios.get(`http://localhost:5000/api/docentes/${selectedTeacherId}/cursos`)
         .then(res => setCourses(res.data))
-        .catch(error => {
-          console.error(`Error al obtener cursos para el docente ${selectedTeacherId}:`, error);
-          setCourses([]);
-          alert(`Error al cargar los cursos.`);
+        .catch(() => {
+          toast.error("Error al cargar los cursos del docente. Inténtalo más tarde.");
         })
         .finally(() => setIsLoadingCourses(false));
     } else {
@@ -119,7 +154,7 @@ const Estudiantes = () => {
     { value: 'bueno', label: 'Bueno' },
     { value: 'regular', label: 'Regular' },
     { value: 'malo', label: 'Malo' },
-    { value: 'pesimo', label: 'Pésimo' }
+    { value: 'pesimo', label: 'Muy malo' }
   ];
 
   const handleInputChange = (questionId: string, value: string) => {
@@ -172,23 +207,46 @@ const Estudiantes = () => {
 
   // --- FUNCIÓN handleSubmit ACTUALIZADA con ID de estudiante desde useAuthStore ---
   const handleSubmit = async () => {
-    // Primero, validar si tenemos el ID del estudiante ANTES de validar el resto del formulario
     if (!estudiante_id) {
-      alert("Error: No se pudo identificar al estudiante. Asegúrate de haber iniciado sesión.");
+      toast.error("Error: No se pudo identificar al estudiante. Asegúrate de haber iniciado sesión.");
       setFormErrors(prev => ({ ...prev, studentId: 'ID de estudiante no encontrado. Inicia sesión.' }));
-      return; // Detener el envío si no hay ID
-    }
-    // Limpiar el error de studentId si ahora sí lo tenemos
-    if (formErrors.studentId) {
-      setFormErrors(prev => ({ ...prev, studentId: undefined }));
+      return;
     }
 
+    if (validateForm()) {
+      setIsCheckingGrammar(true);
 
-    if (validateForm()) { // Ahora sí, validar el resto del formulario
+      // Validar gramática de los comentarios
+      const commentError = await validateGrammar(comment.trim());
+      const courseCommentError = await validateGrammar(courseComment.trim());
 
-      // Construir el payload según la estructura del backend
+      setIsCheckingGrammar(false);
+
+      // Consolidar errores en un solo mensaje
+      if (commentError || courseCommentError) {
+        setGrammarErrors({
+          comment: !!commentError,
+          courseComment: !!courseCommentError
+        });
+        let errorMessage =
+          "Por favor , corrige tú ortagrafía o gramática en el comentario \n";
+        if (commentError && courseCommentError) {
+          errorMessage += '\ndel "Docente" y \n del "Curso".\n';
+        } else if (commentError) {
+          errorMessage += 'del "Docente"';
+        } else if (courseCommentError) {
+          errorMessage += 'del "Curso."';
+        }
+        toast.error(errorMessage.trim());
+        return; // Detener el envío si hay errores
+      } else {
+        setGrammarErrors({});
+      }
+
+      // Si no hay errores, proceder con el envío
+      setIsSubmitting(true);
       const payload = {
-        estudiante_id: estudiante_id, // Usar el ID obtenido del store
+        estudiante_id,
         docente_id: selectedTeacherId,
         curso_id: selectedCourseId,
         calificaciones: questions
@@ -200,16 +258,13 @@ const Estudiantes = () => {
         comentarios: [
           { tipo: 'docente', texto: comment.trim() },
           { tipo: 'curso', texto: courseComment.trim() }
-        ].filter(c => c.texto.length > 0) // Filtrar comentarios vacíos
+        ].filter(c => c.texto.length > 0)
       };
 
-      console.log("Enviando payload:", JSON.stringify(payload, null, 2));
-
       try {
-        const response = await axios.post('http://localhost:5000/api/evaluaciones', payload);
+        await axios.post('http://localhost:5000/api/evaluaciones', payload);
 
-        console.log('✅ Evaluación enviada:', response.data);
-
+        toast.success("Evaluación enviada con éxito.");
         // Limpiar formulario y estados
         setFormData({
           satisfaccion_general: '', metodologia: '', comunicacion: '',
@@ -220,26 +275,28 @@ const Estudiantes = () => {
         setComment('');
         setCourseComment('');
         setSelectedTeacherId(null);
+        setSelectedCourseId(null);
         setFormErrors({});
-        alert('✅ Evaluación enviada con éxito');
-
-      } catch (error) {
-        console.error('❌ Error al enviar evaluación:', error);
-        let errorMsg = 'Hubo un error al enviar la evaluación.';
-        if (axios.isAxiosError(error) && error.response?.data?.error) {
-          errorMsg += ` Detalle: ${error.response.data.error}`;
-        } else if (axios.isAxiosError(error) && error.response?.data?.message) { // A veces Flask envía 'message'
-          errorMsg += ` Detalle: ${error.response.data.message}`;
-        }
-        alert(errorMsg + ' Por favor, inténtalo más tarde.');
+      } catch {
+        toast.error("Hubo un error al enviar la evaluación. Inténtalo más tarde.");
+      } finally {
+        setIsSubmitting(false);
       }
     } else {
-      console.log("Errores de validación:", formErrors);
-      // Si el único error es el studentId (que ya se mostró), no mostrar la alerta genérica.
-      if (!formErrors.studentId || Object.keys(formErrors).length > 1) {
-        alert("Por favor, corrija los errores marcados en el formulario.");
-      }
+      toast.error(
+        "Por favor, corrige los errores marcados en el formulario. Debes completar todos los campos."
+      );
     }
+  };
+
+  const isFormValid = () => {
+    if (!estudiante_id || !selectedTeacherId || !selectedCourseId) return false;
+
+    const allQuestionsAnswered = questions.every(q => formData[q.id]);
+    const isCommentValid = comment.trim().length >= 77 && getWordCount(comment) >= 10;
+    const isCourseCommentValid = courseComment.trim().length >= 77 && getWordCount(courseComment) >= 10;
+
+    return allQuestionsAnswered && isCommentValid && isCourseCommentValid;
   };
 
   const wordCount = getWordCount(comment);
@@ -248,61 +305,136 @@ const Estudiantes = () => {
   const courseCharacterCount = courseComment.trim().length;
 
   return (
-    <div className={`space-y-8 max-w-4xl mx-auto p-4 ${isDarkMode ? 'text-white' : 'text-black'}`}>
-      {/* Mensaje de error si no se encuentra el ID del estudiante */}
-      {formErrors.studentId && (
-        <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 text-center" role="alert">
-          <span className="font-medium">Error de Autenticación:</span> {formErrors.studentId}
+    <div
+      className={`space-y-8 max-w-4xs mx-auto p-4 ${isDarkMode ? "text-white" : "text-black"
+        }`}
+    >
+
+
+      {isSubmitting && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="flex flex-col items-center p-6 bg-white rounded-lg shadow-lg">
+            <Loader className="w-8 h-8 mb-4 text-blue-600 animate-spin" />
+            <p className="text-lg font-medium text-gray-700">
+              Un Momentico, se está enviando la evaluación...
+            </p>
+          </div>
         </div>
       )}
 
-      {/* Selección de Docente */}
-      <div className="mt-6 max-w-xl mx-auto">
-        <label htmlFor="teacherSelect" className={`block text-sm font-medium mb-1 ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>
-          Seleccione un Docente:
-        </label>
-        <select
-          id="teacherSelect"
-          value={selectedTeacherId ?? ''}
-          onChange={(e) => {
-            const id = e.target.value ? parseInt(e.target.value) : null;
-            setSelectedTeacherId(id);
-            if (formErrors.teacher) {
-              setFormErrors(prev => ({ ...prev, teacher: undefined }));
-            }
-          }}
-          className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'} ${formErrors.teacher ? 'border-red-500 ring-red-500' : isDarkMode ? 'border-gray-600' : 'border-gray-300'}`}
+      {/* Mensaje de error si no se encuentra el ID del estudiante */}
+      {formErrors.studentId && (
+        <div
+          className="p-4 mb-4 text-sm text-center text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400"
+          role="alert"
         >
-          <option value="">-- Seleccione un docente --</option>
-          {teachers.map((doc) => (
-            <option key={doc.id} value={doc.id}>{doc.nombre}</option>
-          ))}
-        </select>
-        {formErrors.teacher && (
-          <p className="mt-1 text-sm text-red-500">{formErrors.teacher}</p>
-        )}
-      </div>
+          <span className="font-medium">Error de Autenticación:</span>{" "}
+          {formErrors.studentId}
+        </div>
+      )}
 
-      {/* Selección de Curso */}
-      {selectedTeacherId && (
-        <div className="mt-6 max-w-xl mx-auto">
-          <label htmlFor="courseSelect" className={`block text-sm font-medium mb-1 ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>
+      <div
+        className={`
+          flex flex-col md:flex-row items-stretch justify-center gap-4
+          bg-gradient-to-br from-blue-100 via-white to-blue-50
+          border border-blue-200 rounded-2xl shadow-lg p-4 mb-8
+          transition-all duration-300 hover:shadow-blue-200 hover:scale-[1.01] animate-fade-in
+          ${isDarkMode ? "bg-gray-800 border-gray-700 shadow-gray-900" : ""}
+        `}
+      >
+        {/* Selección de Docente */}
+        <div className="flex flex-col justify-center flex-1 px-2 my-auto animate-fade-in">
+          <label
+            htmlFor="teacherSelect"
+            className={`block text-base md:text-lg font-medium mb-1 ${isDarkMode ? "text-gray-400" : "text-gray-500"
+              }`}
+          >
+            Seleccione un Docente:
+          </label>
+          <select
+            id="teacherSelect"
+            value={selectedTeacherId ?? ""}
+            onChange={(e) => {
+              const id = e.target.value ? parseInt(e.target.value) : null;
+              setSelectedTeacherId(id);
+              if (formErrors.teacher) {
+                setFormErrors((prev) => ({ ...prev, teacher: undefined }));
+              }
+            }}
+            className={`
+                  w-full px-4 py-2 border rounded-md font-medium cursor-pointer
+                  hover:scale-105 focus:scale-105 hover:z-10 focus:z-10 hover:shadow-lg focus:shadow-lg transition-all duration-200 
+                  ${formErrors.teacher
+                ? isDarkMode
+                  ? "border-red-400 bg-gray-500 hover:bg-red-900/50 text-white "
+                  : "border-red-300 bg-white hover:bg-red-50 text-red-700"
+                : selectedTeacherId
+                  ? isDarkMode
+                    ? "bg-blue-200 border-blue-700 text-blue-700 shadow-blue-500 shadow-md"
+                    : "bg-blue-100 border-blue-700 text-blue-700 shadow-blue-400 shadow-lg"
+                  : isDarkMode
+                    ? "bg-gray-300/70 border-blue-400 hover:bg-gray-500/70 shadow-black/50 shadow-md text-black "
+                    : "bg-white border-gray-900 hover:bg-blue-100 text-gray-500 shadow-gray-500 shadow-lg"
+              }
+                `}
+          >
+            <option value="">-- Seleccione un docente --</option>
+            {teachers.map((doc) => (
+              <option key={doc.id} value={doc.id}>
+                {doc.nombre}
+              </option>
+            ))}
+          </select>
+          {formErrors.teacher && (
+            <p className="mt-1 text-sm text-red-500">{formErrors.teacher}</p>
+          )}
+        </div>
+
+        {/* Selección de Curso */}
+        <div className="flex flex-col justify-center flex-1">
+          <label
+            htmlFor="courseSelect"
+            className={`block text-base md:text-lg font-medium mb-1 ${isDarkMode ? "text-gray-400" : "text-gray-400"
+              }`}
+          >
             Seleccione un Curso:
           </label>
           {isLoadingCourses ? (
-            <div className={`text-center p-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Cargando cursos...</div>
+            <div
+              className={`text-center p-2 ${isDarkMode ? "text-gray-400" : "text-gray-500"
+                }`}
+            >
+              Cargando cursos...
+            </div>
           ) : courses.length > 0 ? (
             <select
               id="courseSelect"
-              value={selectedCourseId ?? ''}
+              value={selectedCourseId ?? ""}
               onChange={(e) => {
-                const courseId = e.target.value ? parseInt(e.target.value) : null;
+                const courseId = e.target.value
+                  ? parseInt(e.target.value)
+                  : null;
                 setSelectedCourseId(courseId);
                 if (formErrors.course) {
-                  setFormErrors(prev => ({ ...prev, course: undefined }));
+                  setFormErrors((prev) => ({ ...prev, course: undefined }));
                 }
               }}
-              className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'} ${formErrors.course ? 'border-red-500 ring-red-500' : isDarkMode ? 'border-gray-600' : 'border-gray-300'}`}
+              className={`
+                  w-full px-4 py-2 border rounded-md font-medium cursor-pointer
+                  hover:scale-105 focus:scale-105 hover:z-10 focus:z-10 hover:shadow-lg focus:shadow-lg transition-all duration-200 
+                  ${formErrors.course
+                  ? isDarkMode
+                    ? "border-red-400 bg-gray-500 hover:bg-red-900/50 text-white "
+                    : "border-red-300 bg-white hover:bg-red-50 text-red-700"
+                  : selectedCourseId
+                    ? isDarkMode
+                      ? "bg-blue-200 border-blue-700 text-blue-700 shadow-blue-500 shadow-md"
+                      : "bg-blue-100 border-blue-700 text-blue-700 shadow-blue-400 shadow-lg"
+                    : isDarkMode
+                      ? "bg-gray-300/70 border-blue-400 hover:bg-gray-500/70 shadow-black/50 shadow-md text-black "
+                      : "bg-white border-gray-900 hover:bg-blue-100 text-gray-500 shadow-gray-500 shadow-lg"
+                }
+                `}
             >
               <option value="">-- Seleccione un curso --</option>
               {courses.map((curso) => (
@@ -312,37 +444,73 @@ const Estudiantes = () => {
               ))}
             </select>
           ) : (
-            <div className={`text-center p-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Este docente no tiene cursos asignados.</div>
+            <div
+              className={`text-center p-2 ${isDarkMode ? "text-gray-400" : "text-gray-500"
+                }`}
+            >
+              Este docente no tiene cursos asignados.
+            </div>
           )}
           {formErrors.course && !isLoadingCourses && (
             <p className="mt-1 text-sm text-red-500">{formErrors.course}</p>
           )}
         </div>
-      )}
+      </div>
 
       {/* Renderizar secciones de evaluación */}
       {selectedTeacherId && selectedCourseId && (
         <>
           {/* Cuestionario */}
-          <section className={`rounded-lg shadow-md p-6 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
-            <h2 className="text-xl font-semibold text-center mb-6">Cuestionario de Evaluación</h2>
+          <section
+            className={`
+                rounded-3xl shadow-xl p-6 mb-6 border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-blue-100
+                transition-all duration-500 hover:shadow-blue-200 hover:scale-[1.015] hover:border-blue-300
+                animate-fade-in
+                ${isDarkMode
+                ? "bg-gray-800 border-gray-700 shadow-gray-900"
+                : ""
+              }
+              `}
+          >
+            <h2
+              className={`text-2xl font-semibold text-center mb-6 ${isDarkMode ? "text-gray-700" : "text-gray-700"
+                }`}
+            >
+              Cuestionario de Evaluación
+            </h2>
             <div className="space-y-6">
               {questions.map((question) => (
-                <div key={question.id} className={`border-b pb-4 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                  <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                <div
+                  key={question.id}
+                  className={`border-b pb-4 ${isDarkMode ? "border-gray-400" : "border-gray-800"
+                    }`}
+                >
+                  <label
+                    className={`block text-lg font-medium mb-2 ${isDarkMode ? "text-gray-800" : "text-gray-700"
+                      }`}
+                  >
                     {question.label}
-                    {formErrors.questions?.includes(question.id) && <span className="text-red-500 ml-1">*</span>}
+                    {formErrors.questions?.includes(question.id) && (
+                      <span className="ml-1 text-red-500">*</span>
+                    )}
                   </label>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
                     {evaluationOptions.map((option) => (
                       <label
                         key={option.value}
-                        className={`flex items-center justify-center text-center p-3 border rounded-md cursor-pointer transition-all text-sm
-                          ${formData[question.id] === option.value
-                            ? "bg-blue-600 border-blue-700 text-white font-medium"
+                        className={`flex items-center justify-center text-center p-3 border rounded-md cursor-pointer text-sm
+                        hover:scale-125 focus-within:scale-105 hover:z-10 focus-within:z-10 hover:shadow-lg focus-within:shadow-lg transition-all duration-200
+                        ${formData[question.id] === option.value
+                            ? "bg-blue-200 border-blue-700 text-blue-700 font-medium shadow-blue-400 shadow-lg"
                             : formErrors.questions?.includes(question.id)
-                              ? `${isDarkMode ? 'border-red-400 bg-gray-700 hover:bg-red-900/50' : 'border-red-300 bg-white hover:bg-red-50'}`
-                              : `${isDarkMode ? 'bg-gray-700 border-gray-600 hover:bg-gray-600' : 'bg-white border-gray-300 hover:bg-gray-100'}`
+                              ? `${isDarkMode
+                                ? "border-red-400 bg-gray-700 hover:bg-red-900/50"
+                                : "border-red-300 bg-white hover:bg-red-50"
+                              }`
+                              : `${isDarkMode
+                                ? "bg-gray-300/70 border-gray-900 hover:bg-gray-500/70 shadow-black/50 shadow-md text-black"
+                                : "bg-white border-gray-700 hover:bg-gray-300 shadow-gray-400 shadow-lg "
+                              }`
                           }`}
                       >
                         <input
@@ -350,7 +518,9 @@ const Estudiantes = () => {
                           name={question.id}
                           value={option.value}
                           checked={formData[question.id] === option.value}
-                          onChange={(e) => handleInputChange(question.id, e.target.value)}
+                          onChange={(e) =>
+                            handleInputChange(question.id, e.target.value)
+                          }
                           className="hidden"
                         />
                         {option.label}
@@ -358,103 +528,169 @@ const Estudiantes = () => {
                     ))}
                   </div>
                   {formErrors.questions?.includes(question.id) && (
-                    <p className="mt-1 text-xs text-red-500">Selección requerida</p>
+                    <p className="mt-1 text-xs text-red-500">
+                      Selección requerida
+                    </p>
                   )}
                 </div>
               ))}
             </div>
             {formErrors.questions && formErrors.questions.length > 0 && (
-              <p className="mt-4 text-sm text-red-500 text-center">
+              <p className="mt-4 text-sm text-center text-red-500">
                 Por favor responda todas las preguntas marcadas con *
               </p>
             )}
           </section>
 
-          {/* Comentarios */}
-          <section className={`rounded-lg shadow-md p-6 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
-            {/* Comentario Curso */}
-            <h2 className="text-xl font-semibold text-center mb-4">Comentario sobre el Curso</h2>
+          {/* Comentario Curso */}
+          <section
+            className={`
+                rounded-3xl shadow-xl p-6 mb-6 border border-blue-100 bg-gradient-to-br from-blue-100 via-white to-blue-50 
+                transition-all duration-500 hover:shadow-blue-200 hover:scale-[1.015] hover:border-blue-300
+                animate-fade-in
+                ${isDarkMode
+                ? "bg-gray-400 border-gray-700 shadow-gray-900"
+                : ""
+              }
+              `}
+          >
+            <h2
+              className={`text-2xl font-semibold text-center mb-4 ${isDarkMode ? "text-gray-700" : "text-gray-700"
+                }`}
+            >
+              Comentario sobre el Curso
+            </h2>
             <div>
+              {/* // Modificar el evento onChange de los comentarios para eliminar mensajes dinámicamente */}
               <textarea
                 value={courseComment}
-                onChange={(e) => {
-                  setCourseComment(e.target.value);
-                  if (formErrors.courseComment) {
-                    setFormErrors((prev) => ({ ...prev, courseComment: undefined }));
-                  }
-                }}
+                onChange={(e) =>
+                  setCourseComment(sanitizeComment(e.target.value))
+                } // Solo actualiza el estado
                 placeholder="Comparte tu opinión sobre el curso (mínimo 77 caracteres y 10 palabras)..."
-                className={`w-full px-4 py-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500
-                  ${isDarkMode ? 'bg-gray-700 border-gray-600 placeholder-gray-400' : 'bg-white border-gray-300 placeholder-gray-500'}
-                  ${formErrors.courseComment ? "border-red-500 ring-red-500" : isDarkMode ? "border-gray-600" : "border-gray-300"}
+                className={`w-full px-4 py-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500transition-all duration-200  hover:scale-105 focus:scale-105 hover:shadow-lg focus:shadow-lg
+                    ${isDarkMode
+                    ? "bg-gray-300 border-gray-600 placeholder-gray-400 text-black text-lg"
+                    : "bg-white border-gray-300 placeholder-gray-500 text-black text-lg"
+                  }
+                    ${formErrors.courseComment
+                    ? "border-red-500 ring-red-500"
+                    : isDarkMode
+                      ? "border-gray-300"
+                      : "border-gray-300"
+                  }
                   `}
                 rows={4}
                 aria-label="Comentario sobre el curso"
               />
-              <div className="flex justify-between text-xs mt-2">
-                <span className={courseCharacterCount < 77 ? "text-red-500" : "text-green-500"}>
+              <div className="flex justify-between mt-2 text-lg">
+                <span
+                  className={
+                    courseCharacterCount < 77
+                      ? "text-red-500"
+                      : "text-green-500"
+                  }
+                >
                   Caracteres: {courseCharacterCount}/77 mín.
                 </span>
-                <span className={courseWordCount < 10 ? "text-red-500" : "text-green-500"}>
+                <span
+                  className={
+                    courseWordCount < 10 ? "text-red-500" : "text-green-500"
+                  }
+                >
                   Palabras: {courseWordCount}/10 mín.
                 </span>
+
               </div>
-              {formErrors.courseComment && (
-                <p className="text-sm text-red-500 mt-1">{formErrors.courseComment}</p>
+              {grammarErrors.courseComment && (
+                <div className="mt-1 text-lg text-center text-red-500">
+                  Verifica que el autocorrector del navegador esté activado y
+                  corrige los errores gramaticales. 🧐
+                </div>
               )}
             </div>
+          </section>
 
-            {/* Comentario Docente */}
-            <h2 className="text-xl font-semibold text-center mt-6 mb-4">Comentario sobre el Docente</h2>
+          {/* Comentario Docente */}
+          <section
+            className={`
+                rounded-3xl shadow-xl p-6 border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-blue-100
+                transition-all duration-500 hover:shadow-blue-200 hover:scale-[1.015] hover:border-blue-300
+                animate-fade-in
+                ${isDarkMode
+                ? "bg-gray-100 border-gray-700 shadow-gray-900"
+                : ""
+              }
+              `}
+          >
+            <h2
+              className={`text-2xl font-semibold text-center mb-4 ${isDarkMode ? "text-gray-700" : "text-gray-700"
+                }`}
+            >
+              Comentario sobre el Docente
+            </h2>
             <div>
               <textarea
                 value={comment}
-                onChange={(e) => {
-                  setComment(e.target.value);
-                  if (formErrors.comment) {
-                    setFormErrors((prev) => ({ ...prev, comment: undefined }));
-                  }
-                }}
+                onChange={(e) => setComment(sanitizeComment(e.target.value))} // Solo actualiza el estado
                 placeholder="Comparte tu experiencia con el docente (mínimo 77 caracteres y 10 palabras)..."
-                className={`w-full px-4 py-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500
-                   ${isDarkMode ? 'bg-gray-700 border-gray-600 placeholder-gray-400' : 'bg-white border-gray-300 placeholder-gray-500'}
-                   ${formErrors.comment ? "border-red-500 ring-red-500" : isDarkMode ? "border-gray-600" : "border-gray-300"}
-                   `}
+                className={`w-full px-4 py-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200  hover:scale-105 focus:scale-105 hover:shadow-lg focus:shadow-lg
+                  ${isDarkMode
+                    ? "bg-gray-300 border-gray-600 placeholder-gray-400 text-black text-lg"
+                    : "bg-white border-gray-300 placeholder-gray-500 text-lg"
+                  }
+                  ${formErrors.comment
+                    ? "border-red-500 ring-red-500"
+                    : isDarkMode
+                      ? "border-gray-600"
+                      : "border-gray-300"
+                  }
+                `}
                 rows={4}
                 aria-label="Comentario sobre el docente"
               />
-              <div className="flex justify-between text-xs mt-2">
-                <span className={` ${characterCount < 77 ? "text-red-500" : "text-green-500"}`}>
+              <div className="flex justify-between mt-2 text-lg">
+                <span
+                  className={` ${characterCount < 77 ? "text-red-500" : "text-green-500"
+                    }`}
+                >
                   Caracteres: {characterCount}/77 mín.
                 </span>
-                <span className={` ${wordCount < 10 ? "text-red-500" : "text-green-500"}`}>
+                <span
+                  className={` ${wordCount < 10 ? "text-red-500" : "text-green-500"
+                    }`}
+                >
                   Palabras: {wordCount}/10 mín.
                 </span>
+
               </div>
-              {formErrors.comment && (
-                <p className="text-sm text-red-500 mt-1">{formErrors.comment}</p>
+              {grammarErrors.comment && (
+                <div className="mt-1 text-lg text-center text-red-500">
+                  Verifica que el autocorrector del navegador esté activado y
+                  corrige los errores gramaticales. 🧐
+                </div>
               )}
             </div>
-            <p className={`text-sm text-center mt-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-              Tu evaluación será procesada de forma anónima.
-            </p>
           </section>
 
           {/* Botón de Envío */}
-          <section className="flex justify-center sticky bottom-4 z-10 px-4">
+          <section className="sticky z-10 flex justify-center px-4 bottom-4">
             <button
               onClick={handleSubmit}
-              // Deshabilitar si no hay ID de estudiante o si hay otros errores
-              disabled={!estudiante_id || (Object.keys(formErrors).length > 0 && Object.keys(formErrors).some(k => formErrors[k as keyof typeof formErrors] !== undefined))}
-              className={`flex items-center justify-center w-full max-w-xs px-6 py-3 rounded-md font-medium shadow-lg transition duration-200 ease-in-out
-                ${isDarkMode
-                  ? 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-blue-500 disabled:bg-blue-800 disabled:text-gray-400'
-                  : 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-offset-2 focus:ring-offset-white focus:ring-blue-500 disabled:bg-blue-300 disabled:text-gray-500'
+              disabled={!isFormValid() || isSubmitting || isCheckingGrammar}
+              className={`flex items-center justify-center w-full max-w-xs px-6 py-3 rounded-md font-medium shadow-lg
+              transition duration-200 ease-in-out
+              hover:scale-105 focus:scale-105 hover:shadow-xl focus:shadow-xl
+              ${isDarkMode
+                  ? "bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-blue-400 disabled:bg-blue-800 disabled:text-gray-400"
+                  : "bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-offset-2 focus:ring-offset-white focus:ring-blue-400 disabled:bg-gray-400 disabled:text-white"
                 }
-                disabled:cursor-not-allowed disabled:opacity-70`}
+              disabled:cursor-not-allowed disabled:opacity-70`}
             >
-              <Send className="h-5 w-5 mr-2" />
-              Enviar Evaluación
+              <Send className="w-5 h-5 mr-2" />
+              {isSubmitting || isCheckingGrammar
+                ? "Validando..."
+                : "Enviar Evaluación"}
             </button>
           </section>
         </>

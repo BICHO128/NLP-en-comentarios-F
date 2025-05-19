@@ -1,3 +1,4 @@
+import { toast } from "react-toastify";
 import { create } from "zustand";
 
 interface User {
@@ -55,8 +56,8 @@ export const useAuthStore = create<AuthState>((set) => ({
       console.log("Estado actualizado del store:", useAuthStore.getState());
 
       return true;
-    } catch (error) {
-      console.error("Error en login:", error);
+    } catch {
+      toast.error("Error en login:");
       return false;
     }
   },

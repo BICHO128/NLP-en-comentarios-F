@@ -56,26 +56,25 @@ const PanelAdmin = () => {
     );
   }
 
+
   return (
-    <div className={`min-h-screen flex flex-col ${isDarkMode ? 'bg-gradient-to-b from-black via-blue-400 to-white' : 'bg-white'
-      }`}
+    <div className={min - h - screen flex flex-col ${isDarkMode ? 'bg-gradient-to-b from-black via-blue-400 to-white' : 'bg-gradient-to-r from-blue-400 via-blue-300 to-white'
+    }}
     >
-      {/* Header - Siempre visible y con z-index alto para estar por encima */}
-      <div className="relative z-50 w-full">
-        <Header onLogout={handleLogout} />
-      </div>
+  {/* Header */ }
+  < Header onLogout = { handleLogout } />
 
-      {/* Main Content - Ahora ocupa toda la altura disponible */}
-      <main className="flex flex-col flex-grow overflow-hidden">
-        <Administrador />
-      </main>
+    {/* Main Content */ }
+    < main className = "container flex-grow px-4 py-8 mx-auto" >
+      <Administrador />
+      </ >
 
-      {/* Boton Dark mode */}
-      <DarkModeToggle />
+  {/* Boton Dark mode */ }
+  < DarkModeToggle />
 
-      {/* Footer */}
-      <Footer />
-    </div>
+  {/* Footer */ }
+  < Footer />
+    </div >
   );
 };
 
