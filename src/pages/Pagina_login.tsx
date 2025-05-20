@@ -43,9 +43,12 @@ export default function Login() {
 
     const result = await login(email, password);
 
+    // Los mensajes bien por msg desde el backend son un objeto con un mensaje y un ok
     if (!result.ok) {
       setError(result.msg ?? "Error desconocido");
-      toast.error(result.msg ?? "Error desconocido");
+      toast.error(result.msg ?? "Error desconocido", {
+        className: "toast-error", // Clase personalizada para el estilo
+      });
       return;
     }
     // Si ok, el useEffect hará el navigate cuando el usuario se cargue

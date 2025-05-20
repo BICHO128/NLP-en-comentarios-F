@@ -13,7 +13,8 @@ import {
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { useAuthStore } from '../stores/Autenticacion';
 import { useDarkMode } from '../hooks/useDarkMode';
-import { FaSyncAlt } from 'react-icons/fa'; // Importa el ícono de recargar
+// import { FaSyncAlt } from 'react-icons/fa'; // Importa el ícono de recargar
+import { toast } from 'react-toastify';
 
 ChartJS.register(
   CategoryScale,
@@ -63,7 +64,7 @@ export default function Docentes() {
   const [filtroDocente, setFiltroDocente] = useState<'todos' | 'positivo' | 'neutral' | 'negativo'>('todos');
   const [filtroCurso, setFiltroCurso] = useState<'todos' | 'positivo' | 'neutral' | 'negativo'>('todos');
   // Estado para manejar la animación de clic
-  const [isReloading, setIsReloading] = useState(false);
+  // const [isReloading, setIsReloading] = useState(false);
 
   // Carga los cursos del docente autenticado
   useEffect(() => {
@@ -158,7 +159,12 @@ export default function Docentes() {
   );
 
   const descargarPDF = () => {
-    if (!user || !selectedCourseId) return alert('Seleccione un curso primero.');
+    if (!user || !selectedCourseId) {
+      toast.error("Por favor, selecciona un curso antes de descargar el PDF.", {
+        className: "toast-error", // Clase personalizada para el estilo
+      });
+      return;
+    }
 
     fetch(
       `http://localhost:5000/api/reportes/docente/${user.id}/curso/${selectedCourseId}/pdf`,
@@ -266,156 +272,127 @@ export default function Docentes() {
 
   {/* // Nueva función para recargar los datos */ }
 
-  const handleRecargarDatos = () => {
-    setIsReloading(true); // Activa la animación
-    recargarDatos(); // Llama a la función para recargar los datos
-    setTimeout(() => setIsReloading(false), 1000); // Desactiva la animación después de 1 segundo
-  };
+  // const handleRecargarDatos = () => {
+  //   setIsReloading(true); // Activa la animación
+  //   recargarDatos(); // Llama a la función para recargar los datos
+  //   setTimeout(() => setIsReloading(false), 1000); // Desactiva la animación después de 1 segundo
+  // };
 
-  const recargarDatos = () => {
-    if (!user) return;
+  // const recargarDatos = () => {
+  //   if (!user) return;
 
-    // Recargar cursos
-    fetch(`http://localhost:5000/api/docentes/${user.id}/cursos`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error('Error al cargar cursos');
-        return res.json();
-      })
-      .then((data: Curso[]) => {
-        setCursos(data);
-      })
-      .catch((err) => {
-        console.error('Error al obtener cursos:', err);
-        setCursos([]);
-      });
+  //   // Recargar cursos
+  //   fetch(`http://localhost:5000/api/docentes/${user.id}/cursos`, {
+  //     headers: { Authorization: `Bearer ${token}` },
+  //   })
+  //     .then((res) => {
+  //       if (!res.ok) throw new Error('Error al cargar cursos');
+  //       return res.json();
+  //     })
+  //     .then((data: Curso[]) => {
+  //       setCursos(data);
+  //     })
+  //     .catch((err) => {
+  //       console.error('Error al obtener cursos:', err);
+  //       setCursos([]);
+  //     });
 
-    // // Recargar evaluaciones si hay un curso seleccionado
-    if (selectedCourseId) {
-      fetch(
-        `http://localhost:5000/api/evaluaciones/docente/${user.id}/curso/${selectedCourseId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      )
-        .then((res) => {
-          if (!res.ok) throw new Error('Error al cargar evaluaciones');
-          return res.json();
-        })
-        .then((data: Evaluacion[]) => {
-          setEvaluaciones(data);
-          setMostrarEvaluaciones(true);
-        })
-        .catch((err) => {
-          console.error('Error al obtener evaluaciones:', err);
-          setEvaluaciones([]);
-          setMostrarEvaluaciones(false);
-        });
-    }
-  };
+  //   // // Recargar evaluaciones si hay un curso seleccionado
+  //   if (selectedCourseId) {
+  //     fetch(
+  //       `http://localhost:5000/api/evaluaciones/docente/${user.id}/curso/${selectedCourseId}`,
+  //       { headers: { Authorization: `Bearer ${token}` } }
+  //     )
+  //       .then((res) => {
+  //         if (!res.ok) throw new Error('Error al cargar evaluaciones');
+  //         return res.json();
+  //       })
+  //       .then((data: Evaluacion[]) => {
+  //         setEvaluaciones(data);
+  //         setMostrarEvaluaciones(true);
+  //       })
+  //       .catch((err) => {
+  //         console.error('Error al obtener evaluaciones:', err);
+  //         setEvaluaciones([]);
+  //         setMostrarEvaluaciones(false);
+  //       });
+  //   }
+  // };
 
   return (
     <div className="p-4 space-y-6 rounded-3xl ">
       {/* Selector de curso */}
       <div
         className={`
-          flex flex-col md:flex-row items-stretch justify-center gap-0
+          flex flex-col md:flex-row items-center justify-between gap-4
           bg-gradient-to-br from-blue-100 via-white to-blue-100
           border border-blue-200 rounded-3xl shadow-lg p-4 mb-8
-          transition-all duration-300 hover:shadow-blue-200 hover:scale-[1.01] animate-fade-in
-          ${isDarkMode ? "bg-gray-800 border-gray-700 shadow-gray-900" : "shadow-blue-200 shadow-lg"}
+          transition-all duration-300 hover:shadow-blue-200 hover:scale-105 
+          ${isDarkMode
+            ? "bg-gray-800 border-gray-700 shadow-gray-900"
+            : "shadow-blue-200 shadow-lg"
+          }
         `}
       >
-        <label
-          htmlFor="courseSelect"
-          className={`block text-xl md:text-xl font-medium mb-1 rounded-3xl ${isDarkMode ? "text-gray-600" : "text-gray-500 "
-            }`}
-        >
-          Seleccione un curso:
-        </label>
-        <select
-          className={`
-            w-full border rounded-3xl px-3 py-2 font-medium cursor-pointer
-            transition-all duration-200
-            hover:scale-105 focus:scale-100 hover:shadow-lg focus:shadow-lg text-xl
-            ${isDarkMode
-              ? "bg-gray-800 border-white text-white placeholder-gray-400 shadow-gray-800 shadow-lg"
-              : "bg-white border-blue-300 text-blue-900 placeholder-gray-500 shadow-blue-400 shadow-lg"
-            }
-          `}
-          value={selectedCourseId}
-          onChange={(e: ChangeEvent<HTMLSelectElement>) => {
-            setSelectedCourseId(e.target.value);
-            setMostrarEvaluaciones(false);
-          }}
-        >
-          <option
-            value=""
-            className="text-lg rounded-lg font-semibold text-gray-600"
+        <div className="flex-1">
+          <label
+            htmlFor="courseSelect"
+            className={`block text-xl font-medium mb-1 ${isDarkMode ? "text-gray-600" : "text-gray-500"}`}
           >
-            Elija un curso, para ver sus evaluaciones 😉
-          </option>
-          {cursos.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.nombre}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* // Modificar el botón de recargar */}
-      {selectedCourseId && (
-        <div className="flex items-center justify-center gap-4">
-          <button
-            onClick={obtenerEvaluaciones}
+            Seleccione un curso:
+          </label>
+          <select
             className={`
-            px-4 py-2 text-xl rounded-3xl font-semibold shadow-lg
+              w-full border rounded-3xl px-3 py-2 font-medium cursor-pointer
+              transition-all duration-200
+              hover:shadow-lg focus:shadow-lg text-xl
+              ${isDarkMode
+                ? "bg-gray-800 border-white text-white placeholder-gray-400 shadow-gray-800 shadow-lg"
+                : "bg-white border-blue-300 text-blue-900 placeholder-gray-500 shadow-blue-200 shadow-lg"
+              }
+            `}
+            value={selectedCourseId}
+            onClick={obtenerEvaluaciones}
+            onChange={(e: ChangeEvent<HTMLSelectElement>) => {
+              setSelectedCourseId(e.target.value);
+              setMostrarEvaluaciones(false);
+              if (e.target.value) {
+                setTimeout(() => {
+                  obtenerEvaluaciones();
+                }, 0);
+              }
+            }}
+          >
+            <option
+              value=""
+              className="text-xl rounded-lg font-semibold text-gray-600"
+            >
+              Elija un curso, para ver sus evaluaciones 😉
+            </option>
+            {cursos.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.nombre}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <button
+          onClick={descargarPDF}
+          className={`
+            w-full md:w-auto px-4 py-2 text-xl rounded-3xl font-semibold shadow-lg mt-2 md:mt-8
             transition-all duration-200
             hover:scale-110 focus:scale-110 hover:shadow-xl focus:shadow-xl
             ${isDarkMode
-                ? "bg-blue-700 text-white hover:bg-blue-800"
-                : "bg-blue-600 text-white hover:bg-blue-700"
-              }
+              ? "bg-red-700 text-white hover:bg-red-800"
+              : "bg-red-600 text-white hover:bg-red-700"
+            }
           `}
-          >
-            Ver Evaluaciones
-          </button>
+        >
+          Descargar PDF
+        </button>
+      </div>
 
-          <button
-            onClick={descargarPDF}
-            className={`
-              px-4 py-2 text-xl rounded-3xl font-semibold shadow-lg
-              transition-all duration-200
-              hover:scale-110 focus:scale-110 hover:shadow-xl focus:shadow-xl
-              ${isDarkMode
-                ? "bg-red-700 text-white hover:bg-red-800"
-                : "bg-red-600 text-white hover:bg-red-700"
-              }
-            `}
-          >
-            Descargar PDF
-          </button>
-
-          {/* Botón de recargar con animación */}
-          <button
-            onClick={() => {
-              setIsReloading(true);
-              handleRecargarDatos();
-              setTimeout(() => setIsReloading(false), 2000);
-            }}
-            className={`
-              relative group w-11 h-11 rounded-full
-              bg-gradient-to-l from-blue-100 to-blue-500 shadow-lg
-              hover:shadow-xl transform hover:scale-125 transition-all duration-300 flex items-center justify-center
-              ${isReloading ? "animate-pulse" : ""}
-            `}
-          >
-            <FaSyncAlt
-              className={`text-white text-xl transition-transform duration-500 ${isReloading ? "animate-spin" : ""
-                }`}
-            />
-          </button>
-        </div>
-      )}
 
       {/* Gráficos principales */}
       {mostrarEvaluaciones && evaluaciones.length > 0 && (
@@ -425,12 +402,12 @@ export default function Docentes() {
 
             <div
               className={`rounded-3xl p-4 h-[350px] flex justify-center items-center overflow-hidden transition-all duration-300 hover:scale-105 focus:scale-105 bg-gradient-to-br from-blue-200 via-white to-blue-200
-              border border-blue-300 shadow-blue-200 shadow-lg
-                  ${isDarkMode
+          border border-blue-300 shadow-blue-200 shadow-lg
+            ${isDarkMode
                   ? "bg-gray-900 border-blue-500 text-blue-900"
                   : "text-blue-900"
                 }
-              `}
+          `}
             >
               <div className="flex flex-col items-center justify-center w-full hover:scale-105 focus:scale-105 duration-300">
                 <h3 className="mt-4 mb-1 text-2xl font-semibold text-center md:text-2xl ">
@@ -462,12 +439,12 @@ export default function Docentes() {
 
             <div
               className={`rounded-3xl p-4 h-[350px] flex justify-center items-center overflow-hidden transition-all hover:scale-105 focus:scale-105 duration-300 bg-gradient-to-br from-blue-200 via-white to-blue-200
-            border border-blue-300 shadow-blue-200 shadow-lg
-                  ${isDarkMode
+        border border-blue-300 shadow-blue-200 shadow-lg
+            ${isDarkMode
                   ? "bg-gray-900 border-blue-500 text-blue-900"
                   : "text-blue-900"
                 }
-            `}
+        `}
             >
               <div className="flex flex-col items-center justify-center w-full hover:scale-105 focus:scale-105 duration-300">
                 <h3 className="mt-4 mb-1 text-2xl font-semibold text-center md:text-2xl ">
@@ -497,14 +474,15 @@ export default function Docentes() {
             </div>
 
             {/* Contenedor 3: Comparación de Promedios */}
-            <div className={`bg-white rounded-3xl p-4 h-[350px] flex justify-center items-center overflow-hidden hover:scale-105 focus:scale-105 duration-300
-              bg-gradient-to-br from-blue-200 via-white to-blue-200
-              border border-blue-300 shadow-blue-200 shadow-lg
-                  ${isDarkMode
-                ? "bg-gray-900 border-blue-500 text-blue-900"
-                : "text-blue-900"
-              }
-              `}
+            <div
+              className={`bg-white rounded-3xl p-4 h-[350px] flex justify-center items-center overflow-hidden hover:scale-105 focus:scale-105 duration-300
+          bg-gradient-to-br from-blue-200 via-white to-blue-200
+          border border-blue-300 shadow-blue-200 shadow-lg
+            ${isDarkMode
+                  ? "bg-gray-900 border-blue-500 text-blue-900"
+                  : "text-blue-900"
+                }
+          `}
             >
               <div className="w-full hover:scale-105 focus:scale-105 duration-300">
                 <div>
@@ -531,14 +509,15 @@ export default function Docentes() {
             <>
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2 ">
                 {/* Gráfica de sentimientos del docente */}
-                <div className={`bg-white rounded-3xl p-4 h-[400px] flex flex-col justify-center items-center overflow-hidden hover:scale-105 focus:scale-105 duration-300
-                bg-gradient-to-br from-blue-200 via-white to-blue-200
-              border border-blue-300 shadow-blue-200 shadow-lg
-                  ${isDarkMode
-                    ? "bg-gray-900 border-blue-500 text-blue-900"
-                    : "text-blue-900"
-                  }
-              `}
+                <div
+                  className={`bg-white rounded-3xl p-4 h-[400px] flex flex-col justify-center items-center overflow-hidden hover:scale-105 focus:scale-105 duration-300
+          bg-gradient-to-br from-blue-200 via-white to-blue-200
+          border border-blue-300 shadow-blue-200 shadow-lg
+            ${isDarkMode
+                      ? "bg-gray-900 border-blue-500 text-blue-900"
+                      : "text-blue-900"
+                    }
+          `}
                 >
                   <h4 className="mt-3 mb-1 text-2xl font-semibold text-center md:text-2xl ">
                     Sentimientos Comentarios al Docente
@@ -572,14 +551,15 @@ export default function Docentes() {
                 </div>
 
                 {/* Gráfica de sentimientos del curso */}
-                <div className={`bg-white rounded-3xl p-4 h-[400px] flex flex-col justify-center items-center overflow-hidden hover:scale-105 focus:scale-105 duration-300
-                bg-gradient-to-br from-blue-200 via-white to-blue-200
-              border border-blue-300 shadow-blue-200 shadow-lg
-                  ${isDarkMode
-                    ? "bg-gray-900 border-blue-500 text-blue-900"
-                    : "text-blue-900"
-                  }
-              `}
+                <div
+                  className={`bg-white rounded-3xl p-4 h-[400px] flex flex-col justify-center items-center overflow-hidden hover:scale-105 focus:scale-105 duration-300
+          bg-gradient-to-br from-blue-200 via-white to-blue-200
+          border border-blue-300 shadow-blue-200 shadow-lg
+            ${isDarkMode
+                      ? "bg-gray-900 border-blue-500 text-blue-900"
+                      : "text-blue-900"
+                    }
+          `}
                 >
                   <h4 className="mt-4 mb-1 text-2xl font-semibold text-center md:text-2xl ">
                     Sentimientos Comentarios del Curso
@@ -617,14 +597,15 @@ export default function Docentes() {
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 {/* Contenedor independiente para Comentarios del Docente */}
                 <div className="group-docente hover:scale-105 focus:scale-105 duration-300">
-                  <div className={`p-4 transition-all duration-300 bg-white dark:white rounded-3xl animate-fade-in-docente
-                  bg-gradient-to-br from-blue-200 via-white to-blue-200
-              border border-blue-300 shadow-blue-200 shadow-lg
-                  ${isDarkMode
-                      ? "bg-gray-900 border-blue-500 text-blue-900"
-                      : "text-blue-900"
-                    }
-              `}
+                  <div
+                    className={`p-4 transition-all duration-300 bg-white dark:white rounded-3xl animate-fade-in-docente
+            bg-gradient-to-br from-blue-200 via-white to-blue-200
+          border border-blue-300 shadow-blue-200 shadow-lg
+            ${isDarkMode
+                        ? "bg-gray-900 border-blue-500 text-blue-900"
+                        : "text-blue-900"
+                      }
+          `}
                   >
                     <div className="flex justify-between mb-2">
                       <h5 className="text-2xl font-semibold">
@@ -632,14 +613,14 @@ export default function Docentes() {
                       </h5>
                       <select
                         className={`
-                          border rounded-2xl px-2 py-2 font-medium cursor-pointer
-                          transition-all duration-200
-                          hover:scale-110 focus:scale-110 hover:shadow-lg focus:shadow-lg
-                          ${isDarkMode
+                border rounded-2xl px-2 py-2 font-medium cursor-pointer
+                transition-all duration-200
+                hover:scale-110 focus:scale-110 hover:shadow-lg focus:shadow-lg
+                ${isDarkMode
                             ? "bg-gray-700 border-blue-400 text-white"
                             : "bg-white border-blue-300 text-blue-600"
                           }
-                        `}
+              `}
                         value={filtroDocente}
                         onChange={(e: ChangeEvent<HTMLSelectElement>) =>
                           setFiltroDocente(
@@ -682,14 +663,15 @@ export default function Docentes() {
 
                 {/* Contenedor independiente para Comentarios del Curso */}
                 <div className="group-curso hover:scale-105 focus:scale-105 duration-300">
-                  <div className={`p-4 transition-all duration-300 bg-white dark:bg-white rounded-3xl animate-fade-in-curso
-                  bg-gradient-to-br from-blue-200 via-white to-blue-200
-              border border-blue-300 shadow-blue-200 shadow-lg
-                  ${isDarkMode
-                      ? "bg-gray-900 border-blue-500 text-blue-900"
-                      : "text-blue-900"
-                    }
-              `}
+                  <div
+                    className={`p-4 transition-all duration-300 bg-white dark:bg-white rounded-3xl animate-fade-in-curso
+            bg-gradient-to-br from-blue-200 via-white to-blue-200
+          border border-blue-300 shadow-blue-200 shadow-lg
+            ${isDarkMode
+                        ? "bg-gray-900 border-blue-500 text-blue-900"
+                        : "text-blue-900"
+                      }
+          `}
                   >
                     <div className="flex justify-between mb-2">
                       <h5 className="text-2xl font-semibold">
@@ -697,14 +679,14 @@ export default function Docentes() {
                       </h5>
                       <select
                         className={`
-                          border rounded-2xl px-2 py-2 font-medium cursor-pointer
-                          transition-all duration-200
-                          hover:scale-110 focus:scale-110 hover:shadow-lg focus:shadow-lg
-                          ${isDarkMode
+                border rounded-2xl px-2 py-2 font-medium cursor-pointer
+                transition-all duration-200
+                hover:scale-110 focus:scale-110 hover:shadow-lg focus:shadow-lg
+                ${isDarkMode
                             ? "bg-gray-700 border-blue-400 text-white"
                             : "bg-white border-blue-300 text-blue-600"
                           }
-                        `}
+              `}
                         value={filtroCurso}
                         onChange={(e: ChangeEvent<HTMLSelectElement>) =>
                           setFiltroCurso(

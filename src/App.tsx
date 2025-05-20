@@ -53,7 +53,7 @@ function App() {
           context?.type === "success"
             ? " w-20 bg-green-100 text-green-800 font-medium rounded-2xl shadow-md text-lg"
             : context?.type === "error"
-              ? "w-60 h-auto bg-red-100 text-red-800 font-medium rounded-2xl shadow-md text-lg"
+              ? "w-60 h-20 bg-red-100 text-red-800 font-medium rounded-2xl shadow-md text-lg"
               : ""
         }
         className="toast-container-custom"
@@ -66,6 +66,7 @@ function App() {
         draggable
         pauseOnHover
       />
+      <ToastContainer />
     </>
   );
 }

@@ -90,52 +90,61 @@ const PanelEstudiante = () => {
       {/* Header */}
       <Header onLogout={handleLogout} />
 
-      {user && (
-        <div
-          className={`
+
+      <div className="flex flex-col h-full">
+        {/* Contenido de Bienvenida */}
+
+        <div className="p-6">
+          {user && (
+            <div
+              className={`
             relative z-20 w-full max-w-3xl
             bg-gradient-to-br from-blue-200 via-white to-blue-100
-            border border-blue-300 rounded-2xl shadow-xl p-6 mt-10
+            border border-blue-300 rounded-3xl shadow-xl p-6 mt-10
             transition-all duration-800 hover:shadow-blue-200 hover:scale-[2.01] animate-fade-in
             ${isDarkMode
-              ? "bg-gray-900 border-gray-700 text-blue-900"
-              : "text-blue-900"
-            }
+                  ? "bg-gray-900 border-gray-700 text-blue-900"
+                  : "text-blue-900"
+                }
             mx-auto px-4 sm:px-6 lg:ml-8
           `}
-        >
-          <h2 className="mb-6 text-3xl font-bold text-center">
-            ¡Bienvenido(a), {user.username}!
-          </h2>
-          <p className="mb-10 text-center text-xl/5">
-            En esta sección podrás evaluar a tus docentes y cursos de manera
-            anónima y segura.
-          </p>
-          <ul className="mb-12 text-blue-800 text-start text-lg/5 dark:text-gray-500">
-            <li className='mb-3 text-gray-800'>Debes tener en cuenta lo siguiente:</li>
-            <li>
-              • Todos los campos son{" "}
-              <span className="font-semibold text-red-600 dark:text-red-400">
-                obligatorios
-              </span>
-              .
-            </li>
-            <li>
-              • Debes seleccionar un docente y un curso antes de continuar.
-            </li>
-            <li>
-              • Los comentarios deben tener buena ortografía y cumplir con la
-              cantidad mínima de palabras y caracteres.
-            </li>
-          </ul>
-          <p className="text-base text-center text-gray-800 dark:text-gray-800">
-            Si tienes dudas, contacta a soporte académico.
-          </p>
+            >
+              <div className='hover:scale-105 focus:scale-105 duration-300'>
+                <h2 className="text-3xl font-bold mb-6 text-center">
+                  ¡Bienvenido(a), {user.username}!
+                </h2>
+                <p className="mb-10 text-center text-xl/5">
+                  En esta sección podrás evaluar a tus docentes y cursos de manera
+                  anónima y segura.
+                </p>
+                <ul className="mb-12 text-blue-800 text-start text-lg/5 dark:text-gray-500">
+                  <li className='mb-3 text-gray-800'>Debes tener en cuenta lo siguiente:</li>
+                  <li>
+                    • Todos los campos son{" "}
+                    <span className="font-semibold text-red-600 dark:text-red-400">
+                      obligatorios
+                    </span>
+                    .
+                  </li>
+                  <li>
+                    • Debes seleccionar un docente y un curso antes de continuar.
+                  </li>
+                  <li>
+                    • Los comentarios deben tener buena ortografía y cumplir con la
+                    cantidad mínima de palabras y caracteres.
+                  </li>
+                </ul>
+                <p className="text-base text-center text-gray-800 dark:text-gray-800">
+                  Si tienes dudas, contacta a soporte académico.
+                </p>
+              </div>
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
       {/* Main Content */}
-      <main className="container flex-grow px-4 py-8 mx-auto">
+      <main className="container flex-grow px-10 py-8 mx-auto">
         <Estudiantes />
       </main>
 

@@ -321,7 +321,7 @@ const Estudiantes = () => {
           <div className="flex flex-col items-center p-6 bg-white rounded-2xl shadow-lg">
             <Loader className="w-8 h-8 mb-4 text-blue-600 animate-spin" />
             <p className="text-lg font-medium text-gray-700">
-              Un Momentico, se está enviando la evaluación...
+              Un momentico, se está enviando la evaluación...
             </p>
           </div>
         </div>
@@ -375,11 +375,11 @@ const Estudiantes = () => {
                   : "border-red-300 bg-white hover:bg-red-50 text-red-700"
                 : selectedTeacherId
                   ? isDarkMode
-                    ? "bg-blue-200 border-blue-700 text-blue-700 shadow-blue-500 shadow-md"
-                    : "bg-blue-100 border-blue-700 text-blue-700 shadow-blue-400 shadow-lg"
+                    ? "bg-gray-800 border-white text-white placeholder-gray-400 shadow-gray-800 shadow-lg"
+                    : "bg-white border-blue-300 text-blue-900 placeholder-gray-500 shadow-blue-400 shadow-lg"
                   : isDarkMode
-                    ? "bg-gray-300/70 border-blue-400 hover:bg-gray-500/70 shadow-black/50 shadow-md text-black "
-                    : "bg-white border-gray-900 hover:bg-blue-100 text-gray-500 shadow-gray-500 shadow-lg"
+                    ? "bg-gray-800 border-white text-white placeholder-gray-400 shadow-gray-800 shadow-lg"
+                    : "bg-white border-blue-300 text-blue-900 placeholder-gray-500 shadow-blue-400 shadow-lg"
               }
                 `}
           >
@@ -433,11 +433,11 @@ const Estudiantes = () => {
                     : "border-red-300 bg-white hover:bg-red-50 text-red-700"
                   : selectedCourseId
                     ? isDarkMode
-                      ? "bg-blue-200 border-blue-700 text-blue-700 shadow-blue-500 shadow-md"
-                      : "bg-blue-100 border-blue-700 text-blue-700 shadow-blue-400 shadow-lg"
+                      ? "bg-gray-800 border-white text-white placeholder-gray-400 shadow-gray-800 shadow-lg"
+                      : "bg-white border-blue-300 text-blue-900 placeholder-gray-500 shadow-blue-400 shadow-lg"
                     : isDarkMode
-                      ? "bg-gray-300/70 border-blue-400 hover:bg-blue-100 shadow-blue-400 shadow-md text-black "
-                      : "bg-white border-blue-400 hover:bg-blue-100 text-gray-500 shadow-gray-500 shadow-lg"
+                      ? "bg-gray-800 border-white text-white placeholder-gray-400 shadow-gray-800 shadow-lg"
+                      : "bg-white border-blue-300 text-blue-900 placeholder-gray-500 shadow-blue-400 shadow-lg"
                 }
                 `}
             >

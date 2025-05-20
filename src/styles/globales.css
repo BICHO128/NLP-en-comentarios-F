@@ -1,4 +1,9 @@
-/* src/styles/globals.css */
+/* ========================= TAILWIND DIRECTIVAS ========================= */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ========================= VARIABLES ========================= */
 
 /* Variables para modo claro */
 :root {
@@ -47,125 +52,103 @@
   --ring: 59, 130, 246;
 }
 
-/* estilos para el toast de error: MENSAJES DE ALERTA */
+/* ========================= TOAST ESTILOS ========================= */
+
+/* Estilos para mensajes de error */
 .toast-error-custom {
-  background: #dc2626 !important; /* Fondo rojo intenso */
-  color: #fff !important;         /* Letras blancas */
-  border-radius: 1.2rem !important; /* Esquinas bien redondeadas */
-  max-width: 380px !important;    /* No tan largo */
+  background: #dc2626 !important;
+  color: #fff !important;
+  border-radius: 1.2rem !important;
+  max-width: 380px !important;
   min-width: 260px !important;
   margin: 0 auto !important;
   border-left: 8px solid #fff !important;
-  box-shadow:
-    0 4px 24px 0 #dc2626cc,
-    0 0 24px 4px #fff8 !important; /* Sombra degradada rojo-blanco */
+  box-shadow: 0 4px 24px 0 #dc2626cc, 0 0 24px 4px #fff8 !important;
   font-weight: bold;
   font-size: 1.1rem;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
   padding: 1.2rem 1.5rem !important;
 }
 
-/* Icono de alerta en blanco */
-.toast-error-custom .Toastify__toast-icon,
-.toast-error-custom .Toastify__toast-icon svg {
+/* Estilos para mensajes de éxito */
+.toast-success-custom {
+  background: #22c55e !important;
   color: #fff !important;
-  fill: #fff !important;
-  opacity: 1 !important;
-}
-/* Barra de progreso igual de ancha que el toast */
-.toast-error-custom .Toastify__progress-bar {
-  background: #ffffff !important;
-  height: 6px !important;
-  border-radius: 0 0 3px 3px !important;
-  box-shadow: 0 0 8px #fff;
-  width: 100% !important;
-  min-width: unset !important;
-  max-width: unset !important;
-  left: 0 !important;
-  right: 0 !important;
+  border-radius: 1.2rem !important;
+  padding: 1.2rem 1.5rem !important;
+  font-size: 1rem !important;
+  font-weight: bold;
+  box-shadow: 0 4px 24px 0 #22c55ecc, 0 0 24px 4px #22c55e88 !important;
 }
 
-/* Barra de progreso blanca y más gruesa */
-.toast-error-custom .Toastify__progress-bar {
-  background: #fff !important;
+/* Estilos para mensajes informativos */
+.toast-info-custom {
+  background: #ffffff !important;
+  color: #1b7ac9 !important;
+  border-radius: 1.2rem !important;
+  padding: 1.2rem 1.5rem !important;
+  font-size: 1rem !important;
+  font-weight: bold;
+  box-shadow: 0 4px 24px 0 #3b82f6cc, 0 0 24px 4px #3b82f688 !important;
+}
+
+/* Barra de progreso personalizada */
+.toast-error-custom .Toastify__progress-bar,
+.toast-success-custom .Toastify__progress-bar,
+.toast-info-custom .Toastify__progress-bar {
+  background: #1b7ac9 !important;
   height: 6px !important;
   border-radius: 3px !important;
-  box-shadow: 0 0 10px #ffffff;
+  box-shadow: 0 0 10px #000000 inset !important;
 }
 
+/* Contenedor del toast */
 .toast-container-custom {
   position: fixed !important;
-  top: 110px !important;              /* Ajusta según la altura de tu header */
-  right: 1rem !important;            /* Separación del borde derecho */
+  top: 110px !important;
+  right: 1rem !important;
   margin-bottom: 2rem;
-  left: auto !important;
-  width: auto !important;
-  max-width: 100vw !important;
   z-index: 1050 !important;
-  pointer-events: auto !important;
   display: flex !important;
   flex-direction: column;
   align-items: flex-end;
 }
 
-.toast-container-custom .Toastify__toast {
-  pointer-events: auto;
-  min-width: 260px;
-  max-width: 380px;
-  width: 100%;
-  box-sizing: border-box;
-  border-radius: 1.2rem !important;
-  overflow: hidden;
-  margin-top: 10rem !important;    /* Espacio arriba */
-  margin-bottom: 10rem !important; /* Espacio abajo */
-  scroll-margin-bottom: initial;
-}
-
-/* Elimina el margen inferior del último toast para evitar espacio extra al final */
-.toast-container-custom .Toastify__toast:last-child {
-  margin-bottom: 0 !important;
-}
-
-/* Estilos base */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-/* Estilos personalizados */
-@layer base {
-  body {
-    @apply bg-background text-foreground;
-  }
-}
+/* ========================= COMPONENTES ========================= */
 
 @layer components {
   .btn-primary {
     @apply px-4 py-2 text-white transition-colors duration-200 bg-blue-600 rounded-md hover:bg-blue-700;
   }
-  
+
   .btn-secondary {
     @apply px-4 py-2 text-gray-800 transition-colors duration-200 bg-gray-200 rounded-md hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white;
   }
-  
+
   .btn-danger {
     @apply px-4 py-2 text-white transition-colors duration-200 bg-red-600 rounded-md hover:bg-red-700;
   }
-  
+
   .card {
     @apply p-6 bg-white border border-gray-200 shadow-xl dark:bg-gray-800 rounded-xl dark:border-gray-700;
   }
-  
+
   .input {
     @apply w-full px-4 py-2 text-gray-900 bg-white border border-gray-300 rounded-md dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500;
   }
 }
 
-/* Animaciones */
+/* ========================= ANIMACIONES ========================= */
+
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .animate-fadeIn {
@@ -173,24 +156,20 @@
 }
 
 @keyframes slideIn {
-  from { transform: translateX(-100%); }
-  to { transform: translateX(0); }
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }
 
 .animate-slideIn {
   animation: slideIn 0.3s ease-out;
 }
 
-/* Estilos para el sidebar */
-.sidebar-hover {
-  @apply transition-colors duration-200 hover:bg-blue-800 dark:hover:bg-blue-900;
-}
+/* ========================= GRADIENTES ========================= */
 
-.sidebar-item-hover {
-  @apply transition-colors duration-200 hover:bg-blue-700 dark:hover:bg-blue-800;
-}
-
-/* Gradientes */
 .bg-gradient-blue {
   @apply bg-gradient-to-r from-blue-400 via-blue-300 to-white;
 }

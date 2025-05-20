@@ -1,7 +1,9 @@
 import { useState, useEffect, ChangeEvent, } from 'react';
-import ModalConfirmarClave from '../components/ModalConfirmarClave'; // la ruta según tu estructura
-import { useNavigate } from 'react-router-dom';
+// import ModalConfirmarClave from '../components/ModalConfirmarClave'; // la ruta según tu estructura
+// import { useNavigate } from 'react-router-dom';
 import { Doughnut, Bar, Pie } from 'react-chartjs-2';
+import { toast } from "react-toastify"; // Asegúrate de importar toast
+import "react-toastify/dist/ReactToastify.css";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -15,7 +17,6 @@ import {
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { useAuthStore } from '../stores/Autenticacion';
 import { useDarkMode } from '../hooks/useDarkMode';
-import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 ChartJS.register(
@@ -73,39 +74,39 @@ export default function Administrador() {
   const { isDarkMode } = useDarkMode();
   const { token } = useAuthStore();
 
-  const [modalOpen, setModalOpen] = useState(false);
-  const [rutaDestino, setRutaDestino] = useState<string | null>(null);
-  const navigate = useNavigate();
+  // const [modalOpen, setModalOpen] = useState(false);
+  // const [rutaDestino, setRutaDestino] = useState<string | null>(null);
+  // const navigate = useNavigate();
 
-  function handleIntentarIr(ruta: string) {
-    setRutaDestino(ruta);
-    setModalOpen(true);
-  }
+  // function handleIntentarIr(ruta: string) {
+  //   setRutaDestino(ruta);
+  //   setModalOpen(true);
+  // }
 
-  // Simulación de validación contra backend
-  async function verificarClaveBackend(clave: string): Promise<boolean> {
-    // Debes tener el token JWT ya disponible en tu store o contexto
-    try {
-      const res = await fetch("http://localhost:5000/api/admin/verificar-password", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`, // Asegúrate de que el token esté definido
-        },
-        body: JSON.stringify({ password: clave }),
-      });
-      if (res.status === 200) {
-        setModalOpen(false);
-        setTimeout(() => {
-          if (rutaDestino) navigate(rutaDestino);
-        }, 150);
-        return true;
-      }
-      return false;
-    } catch {
-      return false;
-    }
-  }
+  // // Simulación de validación contra backend
+  // async function verificarClaveBackend(clave: string): Promise<boolean> {
+  //   // Debes tener el token JWT ya disponible en tu store o contexto
+  //   try {
+  //     const res = await fetch("http://localhost:5000/api/admin/verificar-password", {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //         "Authorization": `Bearer ${token}`, // Asegúrate de que el token esté definido
+  //       },
+  //       body: JSON.stringify({ password: clave }),
+  //     });
+  //     if (res.status === 200) {
+  //       setModalOpen(false);
+  //       setTimeout(() => {
+  //         if (rutaDestino) navigate(rutaDestino);
+  //       }, 150);
+  //       return true;
+  //     }
+  //     return false;
+  //   } catch {
+  //     return false;
+  //   }
+  // }
 
 
   // 1) Traer lista de TODOS los docentes con sus cursos
@@ -126,6 +127,7 @@ export default function Administrador() {
     fetchDocentesConCursos();
   }, [token]);
 
+
   const obtenerEvaluaciones = async () => {
     if (!selectedTeacher || !selectedCourse) {
       console.error("Docente o curso no seleccionados");
@@ -133,29 +135,39 @@ export default function Administrador() {
     }
     try {
       // Encuentra el docente y curso seleccionados para obtener sus IDs
-      const docente = docentesConCursos.find(d => d.nombre === selectedTeacher);
-      const curso = docente?.cursos.find(c => c.nombre === selectedCourse);
+      const docente = docentesConCursos.find((d) => d.nombre === selectedTeacher);
+      const curso = docente?.cursos.find((c) => c.nombre === selectedCourse);
 
       if (!docente || !curso) {
         console.error("Docente o curso no encontrados");
         return;
       }
 
-      // Ajustar la URL a la nueva estructura
+      // Llamada a la API
       const res = await fetch(
         `http://localhost:5000/api/evaluaciones/docente/${docente.docente_id}/curso/${curso.id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      if (!res.ok) throw new Error('Error al cargar evaluaciones');
+      if (!res.ok) throw new Error("Error al cargar evaluaciones");
+
       const data: Evaluacion[] = await res.json();
 
-      setEvaluaciones(data);
-      setMostrarEvaluaciones(true);
+      if (data.length === 0) {
+        // Mostrar mensaje si no hay evaluaciones
+        toast.info("No hay evaluaciones disponibles para este curso.", {
+          className: "toast-info-custom", // Clase personalizada si tienes estilos
+        });
+        setMostrarEvaluaciones(false);
+      } else {
+        setEvaluaciones(data);
+        setMostrarEvaluaciones(true);
+      }
     } catch (error) {
       console.error("Error al obtener evaluaciones:", error);
       setEvaluaciones([]);
       setMostrarEvaluaciones(false);
+      toast.error("Error al cargar las evaluaciones. Intente nuevamente.");
     }
   };
 
@@ -279,27 +291,7 @@ export default function Administrador() {
     ],
   };
 
-  // Descargar Excel global
-  const descargarExcelAdmin = async () => {
-    try {
-      const res = await fetch('http://localhost:5000/api/reportes/admin/excel', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (!res.ok) throw new Error('Error al generar Excel');
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'reporte_admin_evaluaciones.xlsx';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error(err);
-      alert('No se pudo descargar el Excel');
-    }
-  };
+
 
   // Descargar PDF específico
   const descargarPDF = () => {
@@ -345,98 +337,21 @@ export default function Administrador() {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Contenido principal */}
 
-      <div className="p-6">
-        {/* Introducción */}
+      {/* Contenido principal */}
+      <div className='p-6'>
+
+        {/* Selección de docente */}
         <div
           className={`
-          relative z-20 w-full max-w-3xl mx-auto text-center
-            bg-gradient-to-br from-blue-200 via-white to-blue-100
-            border border-blue-300 rounded-2xl shadow-xl p-6 mt-10
-            transition-all duration-800 hover:shadow-blue-200 hover:scale-[2.01] animate-fade-in
-          ${isDarkMode
-              ? "bg-gray-900 border-gray-700 text-blue-900"
-              : "text-blue-900"
-            }
-        `}
-        >
-          <h2 className="mb-2 text-4xl font-bold text-blue-800">
-            Evaluaciones Docentes
-          </h2>
-          <p className="text-xl text-gray-700">
-            Bienvenido al panel de administración del sistema de evaluación
-            docente. Aquí podrá visualizar los resultados de las evaluaciones
-            realizadas por los estudiantes, incluyendo análisis de comentarios y
-            gráficos estadísticos.
-          </p>
-          <p className="mt-4 text-lg font-semibold text-gray-700">
-            Puede descargar un reporte general con todas las evaluaciones
-            disponibles hasta la fecha.
-          </p>
-
-          <button
-            onClick={descargarExcelAdmin}
-            className="px-6 py-3 mt-6 text-white transition bg-green-600 rounded-md shadow hover:bg-green-700"
-          >
-            Descargar Excel
-          </button>
-        </div>
-
-        {/* BLOQUE DE ACCIONES ADMIN */}
-        <div
-          className="
-            w-full max-w-5xl mx-auto mt-12 mb-8
-            bg-gradient-to-br from-blue-300 via-white to-blue-100
-            border border-blue-400 rounded-3xl shadow-xl
-            p-8 flex flex-col items-center
-            animate-fade-in
-          "
-        >
-          <h3 className="text-2xl md:text-3xl font-bold text-blue-800 text-center mb-8">
-            También puedes hacer lo siguiente como Administrador:
-          </h3>
-          <div className="flex flex-wrap gap-6 justify-center w-full">
-            <button
-              className="bg-blue-600 hover:bg-blue-800 text-white text-lg px-7 py-4 rounded-2xl shadow font-semibold transition"
-              onClick={() => handleIntentarIr('/admin/crear')}
-            >
-              Crear usuarios o cursos
-            </button>
-            <button
-              className="bg-yellow-500 hover:bg-yellow-600 text-white text-lg px-7 py-4 rounded-2xl shadow font-semibold transition"
-              onClick={() => handleIntentarIr('/admin/actualizar')}
-            >
-              Actualizar información
-            </button>
-            <button
-              className="bg-green-600 hover:bg-green-700 text-white text-lg px-7 py-4 rounded-2xl shadow font-semibold transition"
-              onClick={() => handleIntentarIr('/admin/asignar')}
-            >
-              Asignación de cursos
-            </button>
-            <button
-              className="bg-red-600 hover:bg-red-700 text-white text-lg px-7 py-4 rounded-2xl shadow font-semibold transition"
-              onClick={() => handleIntentarIr('/admin/eliminar')}
-            >
-              Eliminación de usuarios o cursos
-            </button>
-          </div>
-          <ModalConfirmarClave
-            open={modalOpen}
-            onClose={() => setModalOpen(false)}
-            onConfirm={verificarClaveBackend}
-          />
-        </div>
-
-
-        {/* Selección de docente y curso */}
-        <div className={`
           flex flex-col md:flex-1 items-stretch justify-center gap-0
           bg-gradient-to-br from-blue-100 via-white to-blue-100
           border border-blue-200 rounded-3xl shadow-lg p-4 mb-8 mt-12
-          transition-all duration-300 hover:shadow-blue-200 hover:scale-[1.01] animate-fade-in
-          ${isDarkMode ? "bg-gray-800 border-gray-700 shadow-gray-900" : "shadow-blue-200 shadow-lg"}
+          transition-all duration-300 hover:shadow-blue-200 hover:scale-105
+          ${isDarkMode
+              ? "bg-gray-800 border-gray-700 shadow-gray-900"
+              : "shadow-blue-200 shadow-lg"
+            }
         `}
         >
           <label
@@ -455,7 +370,7 @@ export default function Administrador() {
             className={`
             w-full border rounded-3xl px-3 py-2 font-medium cursor-pointer
             transition-all duration-200
-            hover:scale-105 focus:scale-100 hover:shadow-lg focus:shadow-lg text-xl
+            hover:shadow-lg focus:shadow-lg text-xl
             ${isDarkMode
                 ? "bg-gray-800 border-white text-white placeholder-gray-400 shadow-gray-800 shadow-lg"
                 : "bg-white border-blue-300 text-blue-900 placeholder-gray-500 shadow-blue-200 shadow-lg"
@@ -471,77 +386,63 @@ export default function Administrador() {
           </select>
         </div>
 
+        {/* Selección de curso */}
         {selectedTeacher && (
           <div
             className={`
-              flex flex-col md:flex-1 items-stretch justify-center gap-0
+              flex flex-col md:flex-row items-center justify-between gap-4
               bg-gradient-to-br from-blue-100 via-white to-blue-100
               border border-blue-200 rounded-3xl shadow-lg p-4 mb-8
-              transition-all duration-300 hover:shadow-blue-200 hover:scale-[1.01] animate-fade-in
+              transition-all duration-300 hover:shadow-blue-200 hover:scale-105
               ${isDarkMode
                 ? "bg-gray-800 border-gray-700 shadow-gray-900"
                 : "shadow-blue-200 shadow-lg"
               }
             `}
           >
-            <label
-              className={`block font-semibold mb-1 text-xl ${isDarkMode ? "text-gray-600" : "text-gray-500"
-                }`}
-            >
-              Curso:
-            </label>
-            <select
-              value={selectedCourse}
-              onChange={(e) => setSelectedCourse(e.target.value)}
-              className={`
-                w-lvwh-100 border rounded-3xl px-3 py-2 font-medium cursor-pointer
-                transition-all duration-200
-                hover:scale-105 focus:scale-105 hover:shadow-lg focus:shadow-lg text-xl
-                ${isDarkMode
-                  ? "bg-gray-800 border-white text-white placeholder-gray-400 shadow-gray-800 shadow-lg"
-                  : "bg-white border-blue-300 text-blue-900 placeholder-gray-500 shadow-blue-200 shadow-lg"
-                }
-              `}
-            >
-              <option value="">Seleccione un curso</option>
-              {docentesConCursos
-                .find((d) => d.nombre === selectedTeacher)
-                ?.cursos.map((curso) => (
-                  <option key={curso.id} value={curso.nombre}>
-                    {curso.nombre}
-                  </option>
-                ))}
-            </select>
-          </div>
-        )}
+            <div className="flex-1 w-full">
+              <label
+                className={`block font-semibold mb-1 text-xl ${isDarkMode ? "text-gray-600" : "text-gray-500"
+                  }`}
+              >
+                Curso:
+              </label>
+              <select
+                value={selectedCourse}
+                onClick={obtenerEvaluaciones}
+                onChange={(e) => setSelectedCourse(e.target.value)}
+                className={`
+                  w-full border rounded-3xl px-3 py-2 font-medium cursor-pointer
+                  transition-all duration-200
+                  hover:shadow-lg focus:shadow-lg text-xl
+                  ${isDarkMode
+                    ? "bg-gray-800 border-white text-white placeholder-gray-400 shadow-gray-800 shadow-lg"
+                    : "bg-white border-blue-300 text-blue-900 placeholder-gray-500 shadow-blue-200 shadow-lg"
+                  }
+                `}
+              >
+                <option value="">Seleccione un curso</option>
+                {docentesConCursos
+                  .find((d) => d.nombre === selectedTeacher)
+                  ?.cursos.map((curso) => (
+                    <option key={curso.id} value={curso.nombre}>
+                      {curso.nombre}
+                    </option>
+                  ))}
+              </select>
+            </div>
 
-        {selectedTeacher && selectedCourse && (
-          <div className="flex flex-wrap items-center justify-center gap-4 mt-6">
-            <button
-              onClick={obtenerEvaluaciones}
-              className={`
-            px-4 py-2 text-xl rounded-3xl font-semibold shadow-lg
-            transition-all duration-200
-            hover:scale-110 focus:scale-110 hover:shadow-xl focus:shadow-xl
-            ${isDarkMode
-                  ? "bg-blue-700 text-white hover:bg-blue-800"
-                  : "bg-blue-600 text-white hover:bg-blue-700"
-                }
-          `}
-            >
-              Ver Evaluaciones
-            </button>
             <button
               onClick={descargarPDF}
               className={`
-              px-4 py-2 text-xl rounded-3xl font-semibold shadow-lg
-              transition-all duration-200
-              hover:scale-110 focus:scale-110 hover:shadow-xl focus:shadow-xl
-              ${isDarkMode
+                w-full md:w-auto px-4 py-2 text-xl rounded-3xl font-semibold shadow-lg mt-2 md:mt-8
+                transition-all duration-200
+                hover:scale-110 focus:scale-110 hover:shadow-xl focus:shadow-xl
+                ${isDarkMode
                   ? "bg-red-700 text-white hover:bg-red-800"
                   : "bg-red-600 text-white hover:bg-red-700"
                 }
-            `}
+              `}
             >
               Descargar PDF
             </button>
@@ -553,12 +454,13 @@ export default function Administrador() {
           <>
             <div className="grid grid-cols-1 gap-6 mt-8 md:grid-cols-3">
               {/* Contenedor 1: Aspectos del Curso */}
-              <div className={`rounded-3xl p-4 h-[350px] flex justify-center items-center overflow-hidden transition-all duration-300 hover:scale-105 focus:scale-105 bg-gradient-to-br from-blue-200 via-white to-blue-200
+              <div
+                className={`rounded-3xl p-4 h-[350px] flex justify-center items-center overflow-hidden transition-all duration-300 hover:scale-105 focus:scale-105 bg-gradient-to-br from-blue-200 via-white to-blue-200
               border border-blue-300 shadow-blue-200 shadow-lg
                   ${isDarkMode
-                  ? "bg-gray-900 border-blue-500 text-blue-900"
-                  : "text-blue-900"
-                }
+                    ? "bg-gray-900 border-blue-500 text-blue-900"
+                    : "text-blue-900"
+                  }
               `}
               >
                 <div className="flex flex-col items-center justify-center w-full hover:scale-105 focus:scale-105 duration-300">
@@ -588,12 +490,13 @@ export default function Administrador() {
               </div>
 
               {/* Contenedor 2: Aspectos del Docente */}
-              <div className={`rounded-3xl p-4 h-[350px] flex justify-center items-center overflow-hidden transition-all hover:scale-105 focus:scale-105 duration-300 bg-gradient-to-br from-blue-200 via-white to-blue-200
+              <div
+                className={`rounded-3xl p-4 h-[350px] flex justify-center items-center overflow-hidden transition-all hover:scale-105 focus:scale-105 duration-300 bg-gradient-to-br from-blue-200 via-white to-blue-200
             border border-blue-300 shadow-blue-200 shadow-lg
                   ${isDarkMode
-                  ? "bg-gray-900 border-blue-500 text-blue-900"
-                  : "text-blue-900"
-                }
+                    ? "bg-gray-900 border-blue-500 text-blue-900"
+                    : "text-blue-900"
+                  }
             `}
               >
                 <div className="flex flex-col items-center justify-center w-full hover:scale-105 focus:scale-105 duration-300">
@@ -624,13 +527,14 @@ export default function Administrador() {
               </div>
 
               {/* Contenedor 3: Comparación de Promedios */}
-              <div className={`bg-white rounded-3xl p-4 h-[350px] flex justify-center items-center overflow-hidden hover:scale-105 focus:scale-105 duration-300
+              <div
+                className={`bg-white rounded-3xl p-4 h-[350px] flex justify-center items-center overflow-hidden hover:scale-105 focus:scale-105 duration-300
               bg-gradient-to-br from-blue-200 via-white to-blue-200
               border border-blue-300 shadow-blue-200 shadow-lg
                   ${isDarkMode
-                  ? "bg-gray-900 border-blue-500 text-blue-900"
-                  : "text-blue-900"
-                }
+                    ? "bg-gray-900 border-blue-500 text-blue-900"
+                    : "text-blue-900"
+                  }
               `}
               >
                 <div className="w-full hover:scale-105 focus:scale-105 duration-300">
@@ -656,13 +560,14 @@ export default function Administrador() {
             {/* Gráficas de sentimientos y comentarios */}
             <div className="grid grid-cols-1 gap-6 mt-8 md:grid-cols-2">
               {/* Gráfica de sentimientos del docente */}
-              <div className={`bg-white rounded-3xl p-4 h-[400px] flex flex-col justify-center items-center overflow-hidden hover:scale-105 focus:scale-105 duration-300
+              <div
+                className={`bg-white rounded-3xl p-4 h-[400px] flex flex-col justify-center items-center overflow-hidden hover:scale-105 focus:scale-105 duration-300
                 bg-gradient-to-br from-blue-200 via-white to-blue-200
               border border-blue-300 shadow-blue-200 shadow-lg
                   ${isDarkMode
-                  ? "bg-gray-900 border-blue-500 text-blue-900"
-                  : "text-blue-900"
-                }
+                    ? "bg-gray-900 border-blue-500 text-blue-900"
+                    : "text-blue-900"
+                  }
               `}
               >
                 <h4 className="mt-3 mb-1 text-xl font-semibold text-center md:text-2xl ">
@@ -697,13 +602,14 @@ export default function Administrador() {
               </div>
 
               {/* Gráfica de sentimientos del curso */}
-              <div className={`bg-white rounded-3xl p-4 h-[400px] flex flex-col justify-center items-center overflow-hidden hover:scale-105 focus:scale-105 duration-300
+              <div
+                className={`bg-white rounded-3xl p-4 h-[400px] flex flex-col justify-center items-center overflow-hidden hover:scale-105 focus:scale-105 duration-300
                 bg-gradient-to-br from-blue-200 via-white to-blue-200
               border border-blue-300 shadow-blue-200 shadow-lg
                   ${isDarkMode
-                  ? "bg-gray-900 border-blue-500 text-blue-900"
-                  : "text-blue-900"
-                }
+                    ? "bg-gray-900 border-blue-500 text-blue-900"
+                    : "text-blue-900"
+                  }
               `}
               >
                 <h4 className="mt-3 mb-1 text-lg font-semibold text-center md:text-2xl">
@@ -742,13 +648,14 @@ export default function Administrador() {
             <div className="grid grid-cols-1 gap-6 mt-8 md:grid-cols-2">
               {/* Comentarios del docente */}
               <div className="group-docente hover:scale-105 focus:scale-105 duration-300">
-                <div className={`p-4 transition-all duration-300 bg-white dark:white rounded-3xl animate-fade-in-docente
+                <div
+                  className={`p-4 transition-all duration-300 bg-white dark:white rounded-3xl animate-fade-in-docente
                   bg-gradient-to-br from-blue-200 via-white to-blue-200
               border border-blue-300 shadow-blue-200 shadow-lg
                   ${isDarkMode
-                    ? "bg-gray-900 border-blue-500 text-blue-900"
-                    : "text-blue-900"
-                  }
+                      ? "bg-gray-900 border-blue-500 text-blue-900"
+                      : "text-blue-900"
+                    }
               `}
                 >
                   <div className="flex justify-between mb-2">
@@ -807,13 +714,14 @@ export default function Administrador() {
 
               {/* Comentarios del curso */}
               <div className="group-curso hover:scale-105 focus:scale-105 duration-300">
-                <div className={`p-4 transition-all duration-300 bg-white dark:bg-white rounded-3xl animate-fade-in-curso
+                <div
+                  className={`p-4 transition-all duration-300 bg-white dark:bg-white rounded-3xl animate-fade-in-curso
                   bg-gradient-to-br from-blue-200 via-white to-blue-200
               border border-blue-300 shadow-blue-200 shadow-lg
                   ${isDarkMode
-                    ? "bg-gray-900 border-blue-500 text-blue-900"
-                    : "text-blue-900"
-                  }
+                      ? "bg-gray-900 border-blue-500 text-blue-900"
+                      : "text-blue-900"
+                    }
               `}
                 >
                   <div className="flex justify-between mb-2">
@@ -870,7 +778,6 @@ export default function Administrador() {
             </div>
           </>
         )}
-        <ToastContainer />
       </div>
     </div>
   );
