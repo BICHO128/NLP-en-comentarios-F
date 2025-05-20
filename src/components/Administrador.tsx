@@ -1,4 +1,6 @@
 import { useState, useEffect, ChangeEvent, } from 'react';
+import ModalConfirmarClave from '../components/ModalConfirmarClave'; // la ruta según tu estructura
+import { useNavigate } from 'react-router-dom';
 import { Doughnut, Bar, Pie } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -70,6 +72,41 @@ export default function Administrador() {
   const [filtroCurso, setFiltroCurso] = useState<'todos' | 'positivo' | 'neutral' | 'negativo'>('todos');
   const { isDarkMode } = useDarkMode();
   const { token } = useAuthStore();
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [rutaDestino, setRutaDestino] = useState<string | null>(null);
+  const navigate = useNavigate();
+
+  function handleIntentarIr(ruta: string) {
+    setRutaDestino(ruta);
+    setModalOpen(true);
+  }
+
+  // Simulación de validación contra backend
+  async function verificarClaveBackend(clave: string): Promise<boolean> {
+    // Debes tener el token JWT ya disponible en tu store o contexto
+    try {
+      const res = await fetch("http://localhost:5000/api/admin/verificar-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`, // Asegúrate de que el token esté definido
+        },
+        body: JSON.stringify({ password: clave }),
+      });
+      if (res.status === 200) {
+        setModalOpen(false);
+        setTimeout(() => {
+          if (rutaDestino) navigate(rutaDestino);
+        }, 150);
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  }
+
 
   // 1) Traer lista de TODOS los docentes con sus cursos
   useEffect(() => {
@@ -345,6 +382,53 @@ export default function Administrador() {
             Descargar Excel
           </button>
         </div>
+
+        {/* BLOQUE DE ACCIONES ADMIN */}
+        <div
+          className="
+            w-full max-w-5xl mx-auto mt-12 mb-8
+            bg-gradient-to-br from-blue-300 via-white to-blue-100
+            border border-blue-400 rounded-3xl shadow-xl
+            p-8 flex flex-col items-center
+            animate-fade-in
+          "
+        >
+          <h3 className="text-2xl md:text-3xl font-bold text-blue-800 text-center mb-8">
+            También puedes hacer lo siguiente como Administrador:
+          </h3>
+          <div className="flex flex-wrap gap-6 justify-center w-full">
+            <button
+              className="bg-blue-600 hover:bg-blue-800 text-white text-lg px-7 py-4 rounded-2xl shadow font-semibold transition"
+              onClick={() => handleIntentarIr('/admin/crear')}
+            >
+              Crear usuarios o cursos
+            </button>
+            <button
+              className="bg-yellow-500 hover:bg-yellow-600 text-white text-lg px-7 py-4 rounded-2xl shadow font-semibold transition"
+              onClick={() => handleIntentarIr('/admin/actualizar')}
+            >
+              Actualizar información
+            </button>
+            <button
+              className="bg-green-600 hover:bg-green-700 text-white text-lg px-7 py-4 rounded-2xl shadow font-semibold transition"
+              onClick={() => handleIntentarIr('/admin/asignar')}
+            >
+              Asignación de cursos
+            </button>
+            <button
+              className="bg-red-600 hover:bg-red-700 text-white text-lg px-7 py-4 rounded-2xl shadow font-semibold transition"
+              onClick={() => handleIntentarIr('/admin/eliminar')}
+            >
+              Eliminación de usuarios o cursos
+            </button>
+          </div>
+          <ModalConfirmarClave
+            open={modalOpen}
+            onClose={() => setModalOpen(false)}
+            onConfirm={verificarClaveBackend}
+          />
+        </div>
+
 
         {/* Selección de docente y curso */}
         <div className={`

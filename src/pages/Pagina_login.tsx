@@ -32,28 +32,26 @@ export default function Login() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(""); // Limpia error previo
+
     if (!email) {
-      return toast.error('Por favor, ingrese su correo electrónico.');
+      return toast.error("Por favor, ingrese su correo electrónico.");
     }
     if (!password) {
-      return toast.error('Por favor, ingrese su contraseña.');
+      return toast.error("Por favor, ingrese su contraseña.");
     }
 
-    const ok = await login(email, password);
+    const result = await login(email, password);
 
-    if (!ok) {
-      // return toast.error('Credenciales inválidas. Verifique su correo electrónico y contraseña.');
-      setError('Credenciales inválidas. Verifique su correo electrónico y contraseña.');
-      if (error.includes('correo')) {
-        return toast.error('El correo electrónico no existe.');
-      } else if (error.includes('contraseña')) {
-        return toast.error('La contraseña es incorrecta.');
-      } else {
-        return toast.error('Credenciales inválidas. Verifique su correo electrónico y contraseña.');
-      }
+    if (!result.ok) {
+      setError(result.msg ?? "Error desconocido");
+      toast.error(result.msg ?? "Error desconocido");
+      return;
     }
-    // aquí NO necesitas navigate, el useEffect lo hará cuando `user` cambie
+    // Si ok, el useEffect hará el navigate cuando el usuario se cargue
   };
+
+
 
 
   return (
@@ -76,7 +74,7 @@ export default function Login() {
       {/* Login Form */}
       <header className="flex items-center justify-center w-full p-4">
         <div className="container flex items-center justify-center px-4 mx-auto transition-all duration-300">
-          <h1 className="w-full max-w-screen-xl p-4 text-2xl font-bold text-center transition-all duration-300 bg-white bg-opacity-50 rounded-lg shadow-lg sm:text-xl md:text-2xl lg:text-4xl shadow-black animate-fade-in">
+          <h1 className="w-full max-w-screen-xl p-4 text-2xl font-bold text-center transition-all duration-300 bg-white bg-opacity-50 rounded-3xl shadow-lg sm:text-xl md:text-2xl lg:text-4xl shadow-black animate-fade-in">
             Autoevaluación del Docente con Procesamiento de Lenguaje Natural
           </h1>
         </div>
@@ -85,7 +83,7 @@ export default function Login() {
       <div className="flex items-center justify-center flex-grow px-2 my-20 animate-fade-in">
         <div
           className="
-          bg-white bg-opacity-60 p-4 sm:p-6 md:p-8 rounded-lg shadow-black shadow-lg w-full max-w-[70vw] xs:max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg transition-all  duration-300"
+          bg-white bg-opacity-60 p-4 sm:p-6 md:p-8 rounded-3xl shadow-black shadow-lg w-full max-w-[70vw] xs:max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg transition-all  duration-300"
         >
           <h2 className="mb-6 text-2xl font-bold text-center sm:text-3xl md:text-4xl">
             Inicio de Sesión
@@ -102,7 +100,7 @@ export default function Login() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-2 text-base border border-gray-300 rounded-md sm:text-lg md:text-xl focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-base border border-gray-300 rounded-2xl sm:text-lg md:text-xl focus:outline-none focus:ring-1 focus:ring-blue-500"
                 required
               />
             </div>
@@ -118,7 +116,7 @@ export default function Login() {
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3 py-2 text-base border border-gray-300 rounded-md sm:text-lg md:text-xl focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-base border border-gray-300 rounded-2xl sm:text-lg md:text-xl focus:outline-none focus:ring-1 focus:ring-blue-500"
                 required
               />
               <button
@@ -145,7 +143,7 @@ export default function Login() {
             )}
             <button
               type="submit"
-              className="w-full px-4 py-2 text-xl font-bold text-white transition duration-200 bg-blue-600 rounded-md hover:bg-blue-700"
+              className="w-full px-4 py-2 text-xl font-bold text-white transition duration-200 bg-blue-600 rounded-2xl hover:bg-blue-700"
             >
               Ingresar
             </button>

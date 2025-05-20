@@ -25,7 +25,7 @@ const PanelEstudiante = () => {
       // Redirige después de 2 segundos
       const timeout = setTimeout(() => {
         navigate('/');
-      }, 4000);
+      }, 2000);
 
       return () => clearTimeout(timeout); // Limpia el timeout si el componente se desmonta
     }
@@ -93,7 +93,7 @@ const PanelEstudiante = () => {
       {user && (
         <div
           className={`
-            relative z-20 w-full max-w-3xl mx-auto
+            relative z-20 w-full max-w-3xl
             bg-gradient-to-br from-blue-200 via-white to-blue-100
             border border-blue-300 rounded-2xl shadow-xl p-6 mt-10
             transition-all duration-800 hover:shadow-blue-200 hover:scale-[2.01] animate-fade-in
@@ -101,6 +101,7 @@ const PanelEstudiante = () => {
               ? "bg-gray-900 border-gray-700 text-blue-900"
               : "text-blue-900"
             }
+            mx-auto px-4 sm:px-6 lg:ml-8
           `}
         >
           <h2 className="mb-6 text-3xl font-bold text-center">

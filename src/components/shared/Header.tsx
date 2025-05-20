@@ -29,7 +29,7 @@ const Header: React.FC<HeaderProps> = ({ onLogout }) => {
                 {/* Botón cerrar sesión */}
                 <button
                     onClick={onLogout}
-                    className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded transition w-xs md:w-auto md:max-w-none mt-4 md:mt-0"
+                    className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-3xl transition w-xs md:w-auto md:max-w-none mt-4 md:mt-0"
                 >
                     Cerrar sesión
                 </button>

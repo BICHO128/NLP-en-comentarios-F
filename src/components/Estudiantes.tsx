@@ -264,7 +264,12 @@ const Estudiantes = () => {
       try {
         await axios.post('http://localhost:5000/api/evaluaciones', payload);
 
-        toast.success("Evaluación enviada con éxito.");
+        toast.success("Evaluación enviada con éxito.", {
+          className: "bg-green-100 text-green-800 font-medium rounded-lg shadow-md text-sm",
+          progressClassName: "bg-green-500",
+          position: "top-right", // Posiciona el mensaje en la esquina superior derecha
+          style: { marginTop: "4rem" }, // Agrega un margen superior para evitar que tape el header
+        });
         // Limpiar formulario y estados
         setFormData({
           satisfaccion_general: '', metodologia: '', comunicacion: '',
@@ -313,7 +318,7 @@ const Estudiantes = () => {
 
       {isSubmitting && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="flex flex-col items-center p-6 bg-white rounded-lg shadow-lg">
+          <div className="flex flex-col items-center p-6 bg-white rounded-2xl shadow-lg">
             <Loader className="w-8 h-8 mb-4 text-blue-600 animate-spin" />
             <p className="text-lg font-medium text-gray-700">
               Un Momentico, se está enviando la evaluación...
@@ -325,7 +330,7 @@ const Estudiantes = () => {
       {/* Mensaje de error si no se encuentra el ID del estudiante */}
       {formErrors.studentId && (
         <div
-          className="p-4 mb-4 text-sm text-center text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400"
+          className="p-4 mb-4 text-sm text-center text-red-800 rounded-2xl bg-red-50 dark:bg-gray-800 dark:text-red-400"
           role="alert"
         >
           <span className="font-medium">Error de Autenticación:</span>{" "}
@@ -337,7 +342,7 @@ const Estudiantes = () => {
         className={`
           flex flex-col md:flex-row items-stretch justify-center gap-4
           bg-gradient-to-br from-blue-100 via-white to-blue-50
-          border border-blue-200 rounded-2xl shadow-lg p-4 mb-8
+          border border-blue-200 rounded-3xl shadow-lg p-4 mb-8
           transition-all duration-300 hover:shadow-blue-200 hover:scale-[1.01] animate-fade-in
           ${isDarkMode ? "bg-gray-800 border-gray-700 shadow-gray-900" : ""}
         `}
@@ -346,7 +351,7 @@ const Estudiantes = () => {
         <div className="flex flex-col justify-center flex-1 px-2 my-auto animate-fade-in">
           <label
             htmlFor="teacherSelect"
-            className={`block text-base md:text-lg font-medium mb-1 ${isDarkMode ? "text-gray-400" : "text-gray-500"
+            className={`block text-base md:text-lg font-medium mb-1 ${isDarkMode ? "text-black" : "text-black"
               }`}
           >
             Seleccione un Docente:
@@ -362,7 +367,7 @@ const Estudiantes = () => {
               }
             }}
             className={`
-                  w-full px-4 py-2 border rounded-md font-medium cursor-pointer
+                  w-full px-4 py-2 border rounded-2xl font-medium cursor-pointer text-xl
                   hover:scale-105 focus:scale-105 hover:z-10 focus:z-10 hover:shadow-lg focus:shadow-lg transition-all duration-200 
                   ${formErrors.teacher
                 ? isDarkMode
@@ -391,10 +396,10 @@ const Estudiantes = () => {
         </div>
 
         {/* Selección de Curso */}
-        <div className="flex flex-col justify-center flex-1">
+        <div className="flex flex-col justify-center flex-1 px-2 my-auto animate-fade-in">
           <label
             htmlFor="courseSelect"
-            className={`block text-base md:text-lg font-medium mb-1 ${isDarkMode ? "text-gray-400" : "text-gray-400"
+            className={`block text-base md:text-lg font-medium mb-1 ${isDarkMode ? "text-black" : "text-black"
               }`}
           >
             Seleccione un Curso:
@@ -420,7 +425,7 @@ const Estudiantes = () => {
                 }
               }}
               className={`
-                  w-full px-4 py-2 border rounded-md font-medium cursor-pointer
+                  w-full px-3 py-2 border rounded-2xl font-medium cursor-pointer text-xl
                   hover:scale-105 focus:scale-105 hover:z-10 focus:z-10 hover:shadow-lg focus:shadow-lg transition-all duration-200 
                   ${formErrors.course
                   ? isDarkMode
@@ -431,8 +436,8 @@ const Estudiantes = () => {
                       ? "bg-blue-200 border-blue-700 text-blue-700 shadow-blue-500 shadow-md"
                       : "bg-blue-100 border-blue-700 text-blue-700 shadow-blue-400 shadow-lg"
                     : isDarkMode
-                      ? "bg-gray-300/70 border-blue-400 hover:bg-gray-500/70 shadow-black/50 shadow-md text-black "
-                      : "bg-white border-gray-900 hover:bg-blue-100 text-gray-500 shadow-gray-500 shadow-lg"
+                      ? "bg-gray-300/70 border-blue-400 hover:bg-blue-100 shadow-blue-400 shadow-md text-black "
+                      : "bg-white border-blue-400 hover:bg-blue-100 text-gray-500 shadow-gray-500 shadow-lg"
                 }
                 `}
             >
@@ -467,7 +472,7 @@ const Estudiantes = () => {
                 transition-all duration-500 hover:shadow-blue-200 hover:scale-[1.015] hover:border-blue-300
                 animate-fade-in
                 ${isDarkMode
-                ? "bg-gray-800 border-gray-700 shadow-gray-900"
+                ? "bg-blue-800 border-blue-700 shadow-blue-400"
                 : ""
               }
               `}
@@ -482,7 +487,7 @@ const Estudiantes = () => {
               {questions.map((question) => (
                 <div
                   key={question.id}
-                  className={`border-b pb-4 ${isDarkMode ? "border-gray-400" : "border-gray-800"
+                  className={`border-b pb-4 ${isDarkMode ? "border-blue-400" : "border-blue-400"
                     }`}
                 >
                   <label
@@ -498,18 +503,18 @@ const Estudiantes = () => {
                     {evaluationOptions.map((option) => (
                       <label
                         key={option.value}
-                        className={`flex items-center justify-center text-center p-3 border rounded-md cursor-pointer text-sm
+                        className={`flex items-center justify-center text-center p-3 border rounded-2xl cursor-pointer text-sm
                         hover:scale-125 focus-within:scale-105 hover:z-10 focus-within:z-10 hover:shadow-lg focus-within:shadow-lg transition-all duration-200
                         ${formData[question.id] === option.value
-                            ? "bg-blue-200 border-blue-700 text-blue-700 font-medium shadow-blue-400 shadow-lg"
+                            ? "bg-blue-300 border-blue-700 text-blue-700 font-medium shadow-blue-400 shadow-lg"
                             : formErrors.questions?.includes(question.id)
                               ? `${isDarkMode
-                                ? "border-red-400 bg-gray-700 hover:bg-red-900/50"
+                                ? "border-red-400 bg-blue-700 hover:bg-red-900/50"
                                 : "border-red-300 bg-white hover:bg-red-50"
                               }`
                               : `${isDarkMode
-                                ? "bg-gray-300/70 border-gray-900 hover:bg-gray-500/70 shadow-black/50 shadow-md text-black"
-                                : "bg-white border-gray-700 hover:bg-gray-300 shadow-gray-400 shadow-lg "
+                                ? "bg-white border-blue-700 hover:bg-blue-100 shadow-blue-300 shadow-md text-blue-700"
+                                : "bg-white border-blue-700 hover:bg-blue-100 shadow-blue-300 shadow-md text-blue-700"
                               }`
                           }`}
                       >
@@ -549,7 +554,7 @@ const Estudiantes = () => {
                 transition-all duration-500 hover:shadow-blue-200 hover:scale-[1.015] hover:border-blue-300
                 animate-fade-in
                 ${isDarkMode
-                ? "bg-gray-400 border-gray-700 shadow-gray-900"
+                ? "bg-white border-blue-400"
                 : ""
               }
               `}
@@ -568,16 +573,16 @@ const Estudiantes = () => {
                   setCourseComment(sanitizeComment(e.target.value))
                 } // Solo actualiza el estado
                 placeholder="Comparte tu opinión sobre el curso (mínimo 77 caracteres y 10 palabras)..."
-                className={`w-full px-4 py-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500transition-all duration-200  hover:scale-105 focus:scale-105 hover:shadow-lg focus:shadow-lg
+                className={`w-full px-4 py-3 border rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500transition-all duration-200  hover:scale-105 focus:scale-105 hover:shadow-lg focus:shadow-lg
                     ${isDarkMode
-                    ? "bg-gray-300 border-gray-600 placeholder-gray-400 text-black text-lg"
-                    : "bg-white border-gray-300 placeholder-gray-500 text-black text-lg"
+                    ? "bg-white border-blue-400 placeholder-gray-500 text-black text-lg"
+                    : "bg-white border-blue-400 placeholder-gray-500 text-black text-lg"
                   }
                     ${formErrors.courseComment
                     ? "border-red-500 ring-red-500"
                     : isDarkMode
-                      ? "border-gray-300"
-                      : "border-gray-300"
+                      ? "border-blue-400"
+                      : "border-blue-400"
                   }
                   `}
                 rows={4}
@@ -603,7 +608,7 @@ const Estudiantes = () => {
 
               </div>
               {grammarErrors.courseComment && (
-                <div className="mt-1 text-lg text-center text-red-500">
+                <div className="mt-1 text-lg text-start text-red-500">
                   Verifica que el autocorrector del navegador esté activado y
                   corrige los errores gramaticales. 🧐
                 </div>
@@ -618,7 +623,7 @@ const Estudiantes = () => {
                 transition-all duration-500 hover:shadow-blue-200 hover:scale-[1.015] hover:border-blue-300
                 animate-fade-in
                 ${isDarkMode
-                ? "bg-gray-100 border-gray-700 shadow-gray-900"
+                ? "bg-white border-blue-400"
                 : ""
               }
               `}
@@ -634,16 +639,16 @@ const Estudiantes = () => {
                 value={comment}
                 onChange={(e) => setComment(sanitizeComment(e.target.value))} // Solo actualiza el estado
                 placeholder="Comparte tu experiencia con el docente (mínimo 77 caracteres y 10 palabras)..."
-                className={`w-full px-4 py-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200  hover:scale-105 focus:scale-105 hover:shadow-lg focus:shadow-lg
+                className={`w-full px-4 py-3 border rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200  hover:scale-105 focus:scale-105 hover:shadow-lg focus:shadow-lg
                   ${isDarkMode
-                    ? "bg-gray-300 border-gray-600 placeholder-gray-400 text-black text-lg"
-                    : "bg-white border-gray-300 placeholder-gray-500 text-lg"
+                    ? "bg-white border-gray-400 placeholder-gray-500 text-lg text-black"
+                    : "bg-white border-gray-400 placeholder-gray-500 text-lg"
                   }
                   ${formErrors.comment
                     ? "border-red-500 ring-red-500"
                     : isDarkMode
-                      ? "border-gray-600"
-                      : "border-gray-300"
+                      ? "border-blue-400"
+                      : "border-blue-400"
                   }
                 `}
                 rows={4}
@@ -665,7 +670,7 @@ const Estudiantes = () => {
 
               </div>
               {grammarErrors.comment && (
-                <div className="mt-1 text-lg text-center text-red-500">
+                <div className="mt-1 text-lg text-start text-red-500">
                   Verifica que el autocorrector del navegador esté activado y
                   corrige los errores gramaticales. 🧐
                 </div>
@@ -678,11 +683,11 @@ const Estudiantes = () => {
             <button
               onClick={handleSubmit}
               disabled={!isFormValid() || isSubmitting || isCheckingGrammar}
-              className={`flex items-center justify-center w-full max-w-xs px-6 py-3 rounded-md font-medium shadow-lg
+              className={`flex items-center justify-center w-full max-w-xs px-6 py-3 rounded-2xl font-medium shadow-lg
               transition duration-200 ease-in-out
               hover:scale-105 focus:scale-105 hover:shadow-xl focus:shadow-xl
               ${isDarkMode
-                  ? "bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-blue-400 disabled:bg-blue-800 disabled:text-gray-400"
+                  ? "bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-blue-400 disabled:bg-gray-400 disabled:text-white"
                   : "bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-offset-2 focus:ring-offset-white focus:ring-blue-400 disabled:bg-gray-400 disabled:text-white"
                 }
               disabled:cursor-not-allowed disabled:opacity-70`}

@@ -1,11 +1,10 @@
-import { toast } from "react-toastify";
 import { create } from "zustand";
 
 interface User {
   id: number;
   username: string;
   email: string;
-  role_id: number; //  toca hacer el cambio por el rol de usuario
+  role_id: number;
   first_name: string;
   last_name: string;
 }
@@ -14,7 +13,11 @@ interface AuthState {
   isAuthenticated: boolean;
   user: User | null;
   token: string | null;
-  login: (email: string, password: string) => Promise<boolean>;
+  // ⬇️ Nuevo tipo de retorno
+  login: (
+    email: string,
+    password: string
+  ) => Promise<{ ok: boolean; msg?: string }>;
   logout: () => void;
 }
 
@@ -33,32 +36,29 @@ export const useAuthStore = create<AuthState>((set) => ({
         body: JSON.stringify({ email, password }),
       });
 
-      if (!response.ok) return false;
-
       const data = await response.json();
-      console.log("Datos recibidos del backend:", data);
+      // Si NO fue exitoso
+      if (!response.ok) {
+        return { ok: false, msg: data.msg || "Error desconocido" };
+      }
 
-      // Verifica y maneja posibles valores faltantes
+      // Si fue exitoso, actualiza el estado
       const userData = data.user || {};
-
       set({
         isAuthenticated: true,
         token: data.access_token,
         user: {
-          id: data.user.id,
-          username: data.user.username,
-          email: data.user.email,
-          role_id: data.user.role_id,
+          id: userData.id,
+          username: userData.username,
+          email: userData.email,
+          role_id: userData.role_id,
           first_name: userData.first_name || "",
           last_name: userData.last_name || "",
         },
       });
-      console.log("Estado actualizado del store:", useAuthStore.getState());
-
-      return true;
+      return { ok: true };
     } catch {
-      toast.error("Error en login:");
-      return false;
+      return { ok: false, msg: "Error de conexión con el servidor" };
     }
   },
 
