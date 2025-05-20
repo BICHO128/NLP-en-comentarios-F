@@ -327,7 +327,7 @@ export default function Docentes() {
       >
         <label
           htmlFor="courseSelect"
-          className={`block text-base md:text-xl font-medium mb-1 rounded-3xl ${isDarkMode ? "text-gray-600" : "text-gray-500 "
+          className={`block text-xl md:text-xl font-medium mb-1 rounded-3xl ${isDarkMode ? "text-gray-600" : "text-gray-500 "
             }`}
         >
           Seleccione un curso:
@@ -339,7 +339,7 @@ export default function Docentes() {
             hover:scale-105 focus:scale-100 hover:shadow-lg focus:shadow-lg text-xl
             ${isDarkMode
               ? "bg-gray-800 border-white text-white placeholder-gray-400 shadow-gray-800 shadow-lg"
-              : "bg-white border-blue-300 text-blue-900 placeholder-gray-500 shadow-blue-200 shadow-lg"
+              : "bg-white border-blue-300 text-blue-900 placeholder-gray-500 shadow-blue-400 shadow-lg"
             }
           `}
           value={selectedCourseId}

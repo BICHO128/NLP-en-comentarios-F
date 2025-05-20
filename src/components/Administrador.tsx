@@ -348,7 +348,7 @@ export default function Administrador() {
 
         {/* Selección de docente y curso */}
         <div className={`
-          flex flex-col md:flex-row items-stretch justify-center gap-0
+          flex flex-col md:flex-1 items-stretch justify-center gap-0
           bg-gradient-to-br from-blue-100 via-white to-blue-100
           border border-blue-200 rounded-3xl shadow-lg p-4 mb-8 mt-12
           transition-all duration-300 hover:shadow-blue-200 hover:scale-[1.01] animate-fade-in
@@ -356,7 +356,7 @@ export default function Administrador() {
         `}
         >
           <label
-            className={`block font-semibold mb-1 ${isDarkMode ? "text-gray-600" : "text-gray-500"
+            className={`block font-semibold mb-1 text-xl ${isDarkMode ? "text-gray-600" : "text-gray-500"
               }`}
           >
             Docente:
@@ -390,18 +390,18 @@ export default function Administrador() {
         {selectedTeacher && (
           <div
             className={`
-          flex flex-col md:flex-row items-stretch justify-center gap-0
-          bg-gradient-to-br from-blue-100 via-white to-blue-100
-          border border-blue-200 rounded-3xl shadow-lg p-4 mb-8
-          transition-all duration-300 hover:shadow-blue-200 hover:scale-[1.01] animate-fade-in
-          ${isDarkMode
+              flex flex-col md:flex-1 items-stretch justify-center gap-0
+              bg-gradient-to-br from-blue-100 via-white to-blue-100
+              border border-blue-200 rounded-3xl shadow-lg p-4 mb-8
+              transition-all duration-300 hover:shadow-blue-200 hover:scale-[1.01] animate-fade-in
+              ${isDarkMode
                 ? "bg-gray-800 border-gray-700 shadow-gray-900"
                 : "shadow-blue-200 shadow-lg"
               }
-        `}
+            `}
           >
             <label
-              className={`block font-semibold mb-1 ${isDarkMode ? "text-gray-600" : "text-gray-500"
+              className={`block font-semibold mb-1 text-xl ${isDarkMode ? "text-gray-600" : "text-gray-500"
                 }`}
             >
               Curso:
@@ -410,14 +410,14 @@ export default function Administrador() {
               value={selectedCourse}
               onChange={(e) => setSelectedCourse(e.target.value)}
               className={`
-            w-full border rounded-3xl px-3 py-2 font-medium cursor-pointer
-            transition-all duration-200
-            hover:scale-105 focus:scale-100 hover:shadow-lg focus:shadow-lg text-xl
-            ${isDarkMode
+                w-lvwh-100 border rounded-3xl px-3 py-2 font-medium cursor-pointer
+                transition-all duration-200
+                hover:scale-105 focus:scale-105 hover:shadow-lg focus:shadow-lg text-xl
+                ${isDarkMode
                   ? "bg-gray-800 border-white text-white placeholder-gray-400 shadow-gray-800 shadow-lg"
                   : "bg-white border-blue-300 text-blue-900 placeholder-gray-500 shadow-blue-200 shadow-lg"
                 }
-          `}
+              `}
             >
               <option value="">Seleccione un curso</option>
               {docentesConCursos
