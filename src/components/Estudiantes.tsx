@@ -229,13 +229,13 @@ const Estudiantes = () => {
           courseComment: !!courseCommentError
         });
         let errorMessage =
-          "Por favor , corrige tú ortagrafía o gramática en el comentario \n";
+          "Error gramatical en el comentario \n";
         if (commentError && courseCommentError) {
-          errorMessage += '\ndel "Docente" y \n del "Curso".\n';
+          errorMessage += '\ndel Curso y \n Docente.\n';
         } else if (commentError) {
-          errorMessage += 'del "Docente"';
+          errorMessage += 'del Docente';
         } else if (courseCommentError) {
-          errorMessage += 'del "Curso."';
+          errorMessage += 'del Curso.';
         }
         toast.error(errorMessage.trim());
         return; // Detener el envío si hay errores

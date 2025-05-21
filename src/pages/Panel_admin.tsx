@@ -134,8 +134,9 @@ const PanelAdmin = () => {
       {/* Menú lateral para pantallas pequeñas */}
       <div className="p-4 sm:hidden">
         <Menu as="div" className="relative">
-          <Menu.Button className="flex items-center justify-center w-10 h-10 bg-gray-200 rounded-full dark:bg-gray-800">
-            <Bars3Icon className="w-6 h-6 text-gray-800 dark:text-white" />
+          <Menu.Button className="flex items-center justify-center w-12 h-12 bg-gray-200 rounded-full dark:bg-gray-200">
+
+            <Bars3Icon className="w-10 h-10 text-gray-800 dark:text-white" />
           </Menu.Button>
           <Menu.Items className="absolute left-0 z-50 mt-2 w-48 origin-top-left bg-white divide-y divide-gray-200 rounded-md shadow-lg dark:bg-gray-800 dark:divide-gray-700">
             <Menu.Item>
@@ -250,42 +251,42 @@ const PanelAdmin = () => {
         />
       </div>
 
-      <div className="flex flex-col h-full">
+      <div className="container flex-grow-0 sm:container px-10 py-8 mx-auto">
         {/* Contenido de Bienvenida */}
 
-        <div className="p-6">
-          {user && (
-            <div
-              className={`
-            relative z-20 w-full max-w-3xl
-            bg-gradient-to-br from-blue-200 via-white to-blue-100
-            border border-blue-300 rounded-3xl shadow-xl p-6 mt-10 
-            transition-all duration-800 hover:shadow-blue-200 hover:scale-[2.01] animate-fade-in
-            ${isDarkMode
-                  ? "bg-gray-900 border-gray-700 text-blue-900"
-                  : "text-blue-900"
-                }
-            mx-auto px-4 sm:px-6 lg:ml-8
-          `}
-            >
-              <div className="hover:scale-105 focus:scale-105 duration-300">
-                <h2 className="mb-6 text-4xl font-bold text-blue-800 text-center">
-                  ¡Bienvenido(a), {user.username}!
-                </h2>
-                <p className="text-xl text-gray-700">
-                  A su panel de administración del sistema de evaluación
-                  docente. Aquí podrá visualizar los resultados de las
-                  evaluaciones realizadas por los estudiantes, incluyendo
-                  análisis de comentarios y gráficos estadísticos.
-                </p>
+        {/* Contenedor principal alineado */}
+        <div className="max-w-screen-xl sm:max-w-screen-2xl flex flex-col items-start -mx-4 px-8 lg:px-8 mt-10">
+          <div className="flex flex-col justify-start flex-grow-0 my-0 animate-fade-in">
+            {/* Bienvenida */}
+            {user && (
+              <div
+                className={`
+        w-full
+        bg-gradient-to-br from-blue-200 via-white to-blue-100
+        border border-blue-300 rounded-3xl shadow-xl p-6 mb-8
+        transition-all duration-800 hover:shadow-blue-200 hover:scale-[1.01] animate-fade-in
+        ${isDarkMode
+                    ? "bg-gray-900 border-gray-700 text-blue-900"
+                    : "text-blue-900"
+                  }
+      `}
+              >
+                <div className="hover:scale-105 focus:scale-105 duration-300">
+                  <h2 className="mb-6 text-4xl font-bold text-blue-800 text-center">
+                    ¡Bienvenido(a), {user.username}!
+                  </h2>
+                  <p className="text-xl ml-3 text-gray-700">
+                    A su panel de administración del sistema de evaluación docente. Aquí podrá visualizar los resultados de las evaluaciones realizadas por los estudiantes, incluyendo análisis de comentarios y gráficos estadísticos.
+                  </p>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
 
       {/* Main Content - Ahora ocupa toda la altura disponible */}
-      <main className="flex-grow container mx-auto px-8 py-0">
+      <main className="flex-grow container mx-auto px-8 py-8">
         <Administrador />
       </main>
 

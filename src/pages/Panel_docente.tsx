@@ -67,40 +67,43 @@ const PanelDocente = () => {
       <Header onLogout={handleLogout} />
 
 
-      <div className="flex flex-col h-full">
+      <div className="container flex-grow-0 sm:container px-10 py-8 mx-auto">
         {/* Contenido de Bienvenida */}
 
-        <div className="p-6">
-          {user && (
-            <div
-              className={`
-            relative z-20 w-full max-w-3xl
-            bg-gradient-to-br from-blue-200 via-white to-blue-100
-            border border-blue-300 rounded-3xl shadow-xl p-6 mt-10
-            transition-all duration-800 hover:shadow-blue-200 hover:scale-[2.01] animate-fade-in
-            ${isDarkMode
-                  ? "bg-gray-900 border-gray-700 text-blue-900"
-                  : "text-blue-900"
-                }
-            mx-auto px-4 sm:px-6 lg:ml-8
-          `}
-            >
-              <div className='hover:scale-105 focus:scale-105 duration-300'>
-                <h2 className="text-3xl font-bold mb-6 text-center">
-                  ¡Bienvenido(a), {user.username}!
-                </h2>
-                <p className="text-center mb-10 text-xl/5 text-blue-800 dark:text-blue-800">
-                  Aquí puedes consultar y analizar las evaluaciones recibidas de tus estudiantes.
-                </p>
-                <ul className="text-start text-lg/5 text-blue-800 dark:text-gray-500 mb-12 ml-4">
-                  <li> Solo tú puedes ver los resultados de tus evaluaciones.</li>
-                </ul>
-                <p className="text-center text-base text-gray-800 dark:text-gray-800">
-                  Si tienes dudas, contacta a soporte académico.
-                </p>
+        {/* Contenedor principal alineado */}
+        <div className="max-w-screen-xl sm:max-w-screen-2xl flex flex-col items-start -mx-4 px-8 lg:px-8 mt-10">
+          <div className="flex flex-col justify-start flex-grow-0 my-0 animate-fade-in">
+            {/* Bienvenida */}
+            {user && (
+              <div
+                className={`
+        w-full
+        bg-gradient-to-br from-blue-200 via-white to-blue-100
+        border border-blue-300 rounded-3xl shadow-xl p-6 mb-8
+        transition-all duration-800 hover:shadow-blue-200 hover:scale-[1.01] animate-fade-in
+        ${isDarkMode
+                    ? "bg-gray-900 border-gray-700 text-blue-900"
+                    : "text-blue-900"
+                  }
+      `}
+              >
+                <div className='hover:scale-105 focus:scale-105 duration-300'>
+                  <h2 className="text-3xl font-bold mb-6 text-center">
+                    ¡Bienvenido(a), {user.username}!
+                  </h2>
+                  <p className="text-center mb-10 text-xl/5 text-blue-800 dark:text-blue-800">
+                    Aquí puedes consultar y analizar las evaluaciones recibidas de tus estudiantes.
+                  </p>
+                  <ul className="text-start text-lg/5 text-blue-800 dark:text-gray-500 mb-12 ml-4">
+                    <li> Solo tú puedes ver los resultados de tus evaluaciones.</li>
+                  </ul>
+                  <p className="text-center text-base text-gray-800 dark:text-gray-800">
+                    Si tienes dudas, contacta a soporte académico.
+                  </p>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
 

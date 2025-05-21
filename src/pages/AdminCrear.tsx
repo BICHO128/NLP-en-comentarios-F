@@ -147,7 +147,7 @@ export default function AdminCrear() {
             }
         } catch {
             setLoading(false);
-            toast.error("Error de conexión con el backend.");
+            toast.error("Error ");
         }
     };
 
