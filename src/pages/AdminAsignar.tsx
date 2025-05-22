@@ -147,51 +147,51 @@ export default function AdminAsignar() {
         }
     }
 
-    // Quitar/desasignar un curso del docente (lo mueve de asignados a por asignar en tiempo real)
+
     // Quitar/desasignar un curso del docente (lo mueve de asignados a por asignar en tiempo real)
     async function handleQuitarCurso(cursoId: number) {
-        if (!docenteSeleccionado) return;
-
-        // Validar que no sea el último curso
-        if (cursosAsignados.length === 1) {
-            toast.error("No puedes desasignar el único curso del docente. Asigna otro curso primero.");
+        if (!docenteSeleccionado) {
+            toast.error("No se ha seleccionado un docente");
             return;
         }
 
         setLoadingEliminar(cursoId);
-        try {
-            // Deja los cursos menos el que vamos a quitar
-            const nuevosCursosAsignados = cursosAsignados.filter(c => c.id !== cursoId);
-            const nuevosIds = nuevosCursosAsignados.map(c => c.id);
 
-            const res = await fetch(
-                "http://localhost:5000/api/admin/asignar-cursos-docente",
+        try {
+            const response = await fetch(
+                `http://localhost:5000/api/admin/docentes/${docenteSeleccionado}/cursos/${cursoId}`,
                 {
-                    method: "POST",
+                    method: 'DELETE',
                     headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`,
-                    },
-                    body: JSON.stringify({
-                        docentes_ids: [docenteSeleccionado],
-                        cursos_ids: nuevosIds,
-                    }),
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
                 }
             );
-            const data = await res.json();
-            setLoadingEliminar(null);
-            if (res.status === 200 || res.status === 207) {
-                // Actualiza columnas visualmente
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // Actualizar el estado local
+                const nuevosCursosAsignados = cursosAsignados.filter(c => c.id !== cursoId);
                 setCursosAsignados(nuevosCursosAsignados);
+
+                // Agregar el curso a la lista de disponibles
                 const cursoDesasignado = cursos.find(c => c.id === cursoId);
-                if (cursoDesasignado) setCursosPorAsignar(prev => [...prev, cursoDesasignado]);
-                toast.success("Curso desasignado");
+                if (cursoDesasignado) {
+                    setCursosPorAsignar(prev => [...prev, cursoDesasignado]);
+                }
+
+                toast.success(data.message || "Curso desasignado correctamente");
             } else {
-                toast.error(data.error || "Error al desasignar curso");
+                toast.error(data.error || "Error al desasignar el curso");
+                console.error("Error en la desasignación:", data.details);
             }
-        } catch {
+        } catch (error) {
+            toast.error("Error de conexión con el servidor");
+            console.error("Error al desasignar curso:", error);
+        } finally {
             setLoadingEliminar(null);
-            toast.error("Error de conexión con el backend.");
         }
     }
 
