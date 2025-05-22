@@ -80,15 +80,17 @@ export default function AdminAsignar() {
     }
 
     // Asignar cursos
+    // Función para asignar cursos corregida
     async function handleAsignar() {
         if (!docenteSeleccionado || cursosSeleccionados.length === 0) {
             toast.error("Selecciona un docente y al menos un curso.");
             return;
         }
+
         setLoading(true);
         try {
             const res = await fetch(
-                "http://localhost:5000/api/admin/asignar-cursos-docentes",
+                "http://localhost:5000/api/admin/asignar-cursos-docente",
                 {
                     method: "POST",
                     headers: {
@@ -96,19 +98,22 @@ export default function AdminAsignar() {
                         Authorization: `Bearer ${token}`,
                     },
                     body: JSON.stringify({
-                        docentes_ids: [docenteSeleccionado],
-                        cursos_ids: cursosAsignados
-                            .map((c) => c.id)
-                            .concat(cursosSeleccionados),
+                        docente_id: docenteSeleccionado, // Enviamos un solo ID
+                        cursos_ids: cursosSeleccionados, // Enviamos array de cursos
                     }),
                 }
             );
+
             const data = await res.json();
             setLoading(false);
 
-            if (res.status === 200 || res.status === 207) {
-                toast.success(data.msg || "Cursos asignados correctamente");
-                // Refresca cursos asignados/por asignar
+            if (res.status === 200) {
+                toast.success(
+                    `Se asignaron ${data.total_cursos_asignados} cursos al docente`,
+                    { autoClose: 3000 }
+                );
+
+                // Refrescar datos
                 fetch(
                     `http://localhost:5000/api/admin/obtener-cursos-docente/${docenteSeleccionado}`,
                     { headers: { Authorization: `Bearer ${token}` } }
@@ -118,18 +123,27 @@ export default function AdminAsignar() {
                         setCursosAsignados(asignados);
                         setCursosPorAsignar(
                             cursos.filter(
-                                (curso) =>
-                                    !asignados.some((asig) => asig.id === curso.id)
+                                (curso) => !asignados.some((asig) => asig.id === curso.id)
                             )
                         );
                         setCursosSeleccionados([]);
                     });
-            } else {
+            }
+            else if (res.status === 207) {
+                // Asignación parcial con errores
+                toast.warning(
+                    `Asignación parcial: ${data.total_cursos_asignados} cursos asignados, pero con algunos errores`,
+                    { autoClose: 4000 }
+                );
+                console.log("Errores parciales:", data.errores);
+            }
+            else {
                 toast.error(data.error || "Error al asignar cursos");
             }
-        } catch {
+        } catch (error) {
             setLoading(false);
             toast.error("Error de conexión con el backend.");
+            console.error("Error:", error);
         }
     }
 
@@ -151,7 +165,7 @@ export default function AdminAsignar() {
             const nuevosIds = nuevosCursosAsignados.map(c => c.id);
 
             const res = await fetch(
-                "http://localhost:5000/api/admin/asignar-cursos-docentes",
+                "http://localhost:5000/api/admin/asignar-cursos-docente",
                 {
                     method: "POST",
                     headers: {

@@ -36,9 +36,7 @@ function App() {
           />
           <Route
             path="/admin/actualizar"
-            element={
-              isAuthenticated ? <AdminActualizar /> : <Navigate to="/" />
-            }
+            element={isAuthenticated ? <AdminActualizar /> : <Navigate to="/" />}
           />
           <Route
             path="/admin/asignar"
@@ -50,27 +48,25 @@ function App() {
           />
         </Routes>
       </Router>
-
-      {/* ÚNICO ToastContainer CON CONFIGURACIÓN COMPLETA */}
       <ToastContainer
+        toastClassName={(context) =>
+          context?.type === "success"
+            ? " w-20 bg-green-100 text-green-800 font-medium rounded-2xl shadow-md text-lg"
+            : context?.type === "error"
+              ? "w-60 h-20 bg-red-100 text-red-800 font-medium rounded-2xl shadow-md text-lg"
+              : ""
+        }
+        className="toast-container-custom"
         position="top-right"
         autoClose={5000}
         hideProgressBar={false}
         newestOnTop={false}
         closeOnClick
-        rtl={false}
-        pauseOnFocusLoss={false} // Cambiado a false para evitar desapariciones
+        pauseOnFocusLoss
         draggable
         pauseOnHover
-        theme="colored"
-        style={{ width: "auto", maxWidth: "500px" }}
-        toastStyle={{
-          borderRadius: "12px",
-          padding: "16px",
-          fontSize: "16px",
-          margin: "8px",
-        }}
       />
+      <ToastContainer />
     </>
   );
 }

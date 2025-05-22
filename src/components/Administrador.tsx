@@ -110,58 +110,107 @@ export default function Administrador() {
 
 
   // 1) Traer lista de TODOS los docentes con sus cursos
+  // 4. En el useEffect que carga los docentes:
   useEffect(() => {
+    let isMounted = true; // Para evitar memory leaks
+
     async function fetchDocentesConCursos() {
       try {
         const res = await fetch(
           'http://localhost:5000/api/evaluaciones/docentes-con-cursos',
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        if (!res.ok) throw new Error('Error al cargar docentes con cursos');
+
+        if (!isMounted) return; // Evitar actualizaciones si el componente se desmontó
+
+        if (!res.ok) {
+          toast.error('Error al cargar la lista de docentes', {
+            toastId: 'load-teachers-error' // ID único
+          });
+          throw new Error('Error al cargar docentes con cursos');
+        }
+
         const data: DocenteConCursos[] = await res.json();
+
+        if (!isMounted) return;
+
+        if (data.length === 0) {
+          toast.info('No hay docentes registrados en el sistema', {
+            toastId: 'no-teachers-info' // ID único
+          });
+        } else {
+          toast.success('Lista de docentes cargada correctamente', {
+            toastId: 'teachers-loaded-success' // ID único
+          });
+        }
+
         setDocentesConCursos(data);
       } catch (err) {
+        if (!isMounted) return;
         console.error(err);
+        toast.error('Error de conexión al cargar docentes', {
+          toastId: 'connection-error' // ID único
+        });
       }
     }
+
     fetchDocentesConCursos();
+
+    return () => {
+      isMounted = false; // Cleanup para evitar memory leaks
+    };
   }, [token]);
 
 
+  // 2. Corregir la función obtenerEvaluaciones
   const obtenerEvaluaciones = async () => {
-    if (!selectedTeacher || !selectedCourse) {
-      console.error("Docente o curso no seleccionados");
+    if (!selectedTeacher) {
+      toast.warning('Por favor seleccione un docente primero', {
+        toastId: 'select-teacher-warning' // ID único para evitar duplicados
+      });
       return;
     }
+
+    if (!selectedCourse) {
+      toast.warning('Por favor seleccione un curso');
+      return;
+    }
+
     try {
-      // Encuentra el docente y curso seleccionados para obtener sus IDs
       const docente = docentesConCursos.find((d) => d.nombre === selectedTeacher);
       const curso = docente?.cursos.find((c) => c.nombre === selectedCourse);
 
       if (!docente || !curso) {
-        console.error("Docente o curso no encontrados");
+        toast.error('Docente o curso no encontrados');
         return;
       }
 
-      // Llamada a la API
+      toast.info('Cargando evaluaciones...', { autoClose: 2000 });
+
       const res = await fetch(
         `http://localhost:5000/api/evaluaciones/docente/${docente.docente_id}/curso/${curso.id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      if (!res.ok) throw new Error("Error al cargar evaluaciones");
+      if (!res.ok) {
+        toast.error('Error al cargar evaluaciones');
+        throw new Error("Error al cargar evaluaciones");
+      }
 
       const data: Evaluacion[] = await res.json();
 
       if (data.length === 0) {
-        // Mostrar mensaje si no hay evaluaciones
-        toast.info("No hay evaluaciones disponibles para este curso.", {
-          className: "toast-info-custom", // Clase personalizada si tienes estilos
+        toast.info("No hay evaluaciones disponibles para este curso", {
+          autoClose: 3000,
+          className: "bg-blue-100 text-blue-800"
         });
         setMostrarEvaluaciones(false);
       } else {
         setEvaluaciones(data);
         setMostrarEvaluaciones(true);
+        toast.success(`Se cargaron ${data.length} evaluaciones`, {
+          autoClose: 2000
+        });
       }
     } catch (error) {
       console.error("Error al obtener evaluaciones:", error);
@@ -293,10 +342,14 @@ export default function Administrador() {
 
 
 
-  // Descargar PDF específico
-  const descargarPDF = () => {
-    if (!selectedTeacher || !selectedCourse) {
-      return alert('Seleccione un curso primero.');
+  // 3. Modificación de la función descargarPDF con más feedback
+  const descargarPDF = async () => {
+    if (!selectedTeacher) {
+      toast.warning('Debe seleccionar un docente primero', {
+        position: 'top-right',
+        toastId: 'select-teacher-pdf' // ID único
+      });
+      return;
     }
 
     // Encuentra el docente y curso seleccionados para obtener sus IDs
@@ -304,35 +357,56 @@ export default function Administrador() {
     const curso = docente?.cursos.find(c => c.nombre === selectedCourse);
 
     if (!docente || !curso) {
-      return alert('Docente o curso no encontrados.');
+      toast.error("Debes seleccionar un curso para descargar el PDF");
+      return;
     }
 
-    fetch(
-      `http://localhost:5000/api/reportes/docente/${docente.docente_id}/curso/${curso.id}/pdf`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`
+    const loadingToast = toast.loading('Generando PDF, por favor espere...', {
+      position: 'top-right'
+    });
+
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/reportes/docente/${docente.docente_id}/curso/${curso.id}/pdf`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
         }
+      );
+
+      if (!res.ok) {
+        throw new Error('Error al generar el PDF');
       }
-    )
-      .then(res => {
-        if (!res.ok) throw new Error('Error al generar el PDF');
-        return res.blob();
-      })
-      .then(blob => {
+
+      const blob = await res.blob();
+
+      toast.update(loadingToast, {
+        render: 'PDF generado correctamente',
+        type: 'success',
+        isLoading: false,
+        autoClose: 2000
+      });
+
+      setTimeout(() => {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `reporte_docente_${docente.nombre}_curso_${curso.nombre}.pdf`;
+        a.download = `reporte_${docente.nombre}_${curso.nombre}.pdf`.replace(/\s+/g, '_');
         document.body.appendChild(a);
         a.click();
         a.remove();
         URL.revokeObjectURL(url);
-      })
-      .catch(err => {
-        console.error(err);
-        alert('No se pudo descargar el informe. Intente de nuevo más tarde.');
+      }, 500);
+    } catch (error) {
+      toast.update(loadingToast, {
+        render: "Error al descargar el informe o no tiene evalaciones",
+        type: "error",
+        isLoading: false,
+        autoClose: 3000,
       });
+      console.error('Error al descargar PDF:', error);
+    }
   };
 
   return (
@@ -437,7 +511,7 @@ export default function Administrador() {
               className={`
                 w-full md:w-auto px-4 py-2 text-xl rounded-3xl font-semibold shadow-lg mt-2 md:mt-8
                 transition-all duration-200
-                hover:scale-110 focus:scale-110 hover:shadow-xl focus:shadow-xl
+                hover:shadow-xl focus:shadow-xl
                 ${isDarkMode
                   ? "bg-red-700 text-white hover:bg-red-800"
                   : "bg-red-600 text-white hover:bg-red-700"

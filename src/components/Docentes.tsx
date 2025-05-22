@@ -15,6 +15,7 @@ import { useAuthStore } from '../stores/Autenticacion';
 import { useDarkMode } from '../hooks/useDarkMode';
 // import { FaSyncAlt } from 'react-icons/fa'; // Importa el ícono de recargar
 import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 ChartJS.register(
   CategoryScale,
@@ -67,8 +68,14 @@ export default function Docentes() {
   // const [isReloading, setIsReloading] = useState(false);
 
   // Carga los cursos del docente autenticado
+  // Modificación del useEffect que carga los cursos
   useEffect(() => {
     if (!user) return;
+
+    const loadingToast = toast.loading('Cargando cursos...', {
+      toastId: 'loading-courses'
+    });
+
     fetch(`http://localhost:5000/api/docentes/${user.id}/cursos`, {
       headers: { Authorization: `Bearer ${token}` }
     })
@@ -77,17 +84,46 @@ export default function Docentes() {
         return res.json();
       })
       .then((data: Curso[]) => {
+        toast.update(loadingToast, {
+          render: data.length > 0 ? `Cargados ${data.length} cursos` : 'No tienes cursos asignados',
+          type: data.length > 0 ? 'success' : 'info',
+          isLoading: false,
+          autoClose: 2000
+        });
         setCursos(data);
       })
       .catch(err => {
         console.error('Error al obtener cursos:', err);
+        toast.update(loadingToast, {
+          render: 'Error al cargar tus cursos',
+          type: 'error',
+          isLoading: false,
+          autoClose: 3000
+        });
         setCursos([]);
       });
   }, [user, token]);
 
   // Obtiene evaluaciones para el curso seleccionado
   const obtenerEvaluaciones = () => {
-    if (!user || !selectedCourseId) return;
+    if (!user) {
+      toast.error('No se pudo identificar al docente', {
+        toastId: 'user-not-found'
+      });
+      return;
+    }
+
+    if (!selectedCourseId) {
+      toast.warning('Por favor selecciona un curso primero', {
+        toastId: 'select-course-warning'
+      });
+      return;
+    }
+
+    const loadingToast = toast.loading('Cargando evaluaciones...', {
+      toastId: 'loading-evaluations'
+    });
+
     fetch(
       `http://localhost:5000/api/evaluaciones/docente/${user.id}/curso/${selectedCourseId}`,
       { headers: { Authorization: `Bearer ${token}` } }
@@ -97,13 +133,32 @@ export default function Docentes() {
         return res.json();
       })
       .then((data: Evaluacion[]) => {
-        console.log('RESPUESTA EVALUACIONES:', data);
-
+        if (data.length === 0) {
+          toast.update(loadingToast, {
+            render: 'No hay evaluaciones para este curso',
+            type: 'info',
+            isLoading: false,
+            autoClose: 3000
+          });
+        } else {
+          toast.update(loadingToast, {
+            render: `Se cargaron ${data.length} evaluaciones`,
+            type: 'success',
+            isLoading: false,
+            autoClose: 2000
+          });
+        }
         setEvaluaciones(data);
-        setMostrarEvaluaciones(true);
+        setMostrarEvaluaciones(data.length > 0);
       })
       .catch(err => {
         console.error('Error al obtener evaluaciones:', err);
+        toast.update(loadingToast, {
+          render: 'Error al cargar evaluaciones',
+          type: 'error',
+          isLoading: false,
+          autoClose: 3000
+        });
         setEvaluaciones([]);
         setMostrarEvaluaciones(false);
       });
@@ -158,27 +213,50 @@ export default function Docentes() {
     { positivo: 0, neutral: 0, negativo: 0 }
   );
 
+  // Función descargarPDF corregida
   const descargarPDF = () => {
-    if (!user || !selectedCourseId) {
-      toast.error("Por favor, selecciona un curso antes de descargar el PDF.", {
-        className: "toast-error", // Clase personalizada para el estilo
+    if (!user) {
+      toast.error('No se pudo identificar al docente', {
+        toastId: 'user-not-found-pdf'
       });
       return;
     }
+
+    if (!selectedCourseId) {
+      toast.warning('Por favor selecciona un curso antes de descargar', {
+        toastId: 'no-course-selected'
+      });
+      return;
+    }
+
+    const loadingToast = toast.loading('Generando PDF...', {
+      toastId: 'generating-pdf'
+    });
 
     fetch(
       `http://localhost:5000/api/reportes/docente/${user.id}/curso/${selectedCourseId}/pdf`,
       {
         headers: {
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       }
     )
-      .then(res => {
-        if (!res.ok) throw new Error('Error al generar el PDF');
+      .then(async res => {
+        if (!res.ok) {
+          const error = await res.json().catch(() => ({}));
+          throw new Error(error.message || 'Error al generar el PDF');
+        }
         return res.blob();
       })
       .then(blob => {
+        toast.update(loadingToast, {
+          render: 'PDF generado correctamente',
+          type: 'success',
+          isLoading: false,
+          autoClose: 2000
+        });
+
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -189,8 +267,13 @@ export default function Docentes() {
         URL.revokeObjectURL(url);
       })
       .catch(err => {
-        console.error(err);
-        alert('No se pudo descargar el informe. Intente de nuevo más tarde.');
+        console.error('Error al descargar PDF:', err);
+        toast.update(loadingToast, {
+          render: err.message || 'Error al generar el PDF',
+          type: 'error',
+          isLoading: false,
+          autoClose: 3000
+        });
       });
   };
 
@@ -379,15 +462,17 @@ export default function Docentes() {
 
         <button
           onClick={descargarPDF}
+          disabled={!selectedCourseId}
           className={`
-            w-full md:w-auto px-4 py-2 text-xl rounded-3xl font-semibold shadow-lg mt-2 md:mt-8
-            transition-all duration-200
-            hover:scale-110 focus:scale-110 hover:shadow-xl focus:shadow-xl
-            ${isDarkMode
+    w-full md:w-auto px-4 py-2 text-xl rounded-3xl font-semibold shadow-lg mt-2 md:mt-8
+    transition-all duration-200
+    hover:scale-110 focus:scale-110 hover:shadow-xl focus:shadow-xl
+    ${isDarkMode
               ? "bg-red-700 text-white hover:bg-red-800"
               : "bg-red-600 text-white hover:bg-red-700"
             }
-          `}
+    ${!selectedCourseId ? 'opacity-50 cursor-not-allowed' : ''}
+  `}
         >
           Descargar PDF
         </button>
