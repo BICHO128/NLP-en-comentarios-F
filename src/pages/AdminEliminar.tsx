@@ -36,6 +36,7 @@ export default function AdminEliminar() {
     const navigate = useNavigate();
     const { token } = useAuthStore();
     const { isDarkMode } = useDarkMode();
+    const { logout } = useAuthStore();
 
     const [opcion, setOpcion] = useState<Opcion>("docente");
     const [listaDocentes, setListaDocentes] = useState<Docente[]>([]);
@@ -43,6 +44,12 @@ export default function AdminEliminar() {
     const [listaCursos, setListaCursos] = useState<Curso[]>([]);
     const [seleccionados, setSeleccionados] = useState<number[]>([]);
     const [loading, setLoading] = useState(false);
+
+
+    const handleLogout = () => {
+        logout(); // Limpia el estado de autenticación
+        navigate('/'); // Redirige al login
+    };
 
     // Carga de datos según la opción
     useEffect(() => {
@@ -139,9 +146,9 @@ export default function AdminEliminar() {
                 </button>
             ) : (
                 <button
-                    className={`p-2 rounded-full shadow transition ml-2 ${isDarkMode
-                        ? "bg-gray-600 hover:bg-red-600 text-gray-300"
-                        : "bg-gray-200 hover:text-red-500 text-gray-700"
+                    className={`p-2 rounded-full shadow-md shadow-gray-600 transition ml-2 text-4xl ${isDarkMode
+                        ? "bg-transparent hover:text-red-600 text-gray-700"
+                        : "bg-transparent hover:text-red-500 text-gray-700"
                         }`}
                     onClick={() => agregarSeleccionado(id)}
                     title="Seleccionar para eliminar"
@@ -159,26 +166,28 @@ export default function AdminEliminar() {
         return listaRender.map((item) => (
             <div
                 key={item.id}
-                className={`flex justify-between items-center p-4 rounded-3xl mb-2 transition ${isDarkMode
-                    ? "bg-gray-700 hover:bg-gray-600"
-                    : "bg-gray-100 hover:bg-gray-200"
+                className={`flex justify-between items-center p-4 rounded-3xl mb-2 transition border-2 border-blue-400 ${isDarkMode ? "bg-white " : "bg-white"
                     }`}
             >
                 <div>
                     {opcion === "curso" ? (
-                        <span className={`font-semibold ${isDarkMode ? "text-white" : "text-black"
-                            }`}>{(item as Curso).nombre}</span>
+                        <span
+                            className={`font-semibold text-lg md:text-xl ${isDarkMode ? "text-black" : "text-black"
+                                }`}
+                        >
+                            {(item as Curso).nombre}
+                        </span>
                     ) : (
                         <>
                             <span
-                                className={`font-semibold ${isDarkMode ? "text-white" : "text-black"
+                                className={`font-semibold text-lg md:text-xl ${isDarkMode ? "text-black" : "text-black"
                                     }`}
                             >
                                 {(item as Docente | Estudiante).first_name}{" "}
                                 {(item as Docente | Estudiante).last_name}
                             </span>
                             <span
-                                className={`ml-2 ${isDarkMode ? "text-gray-400" : "text-gray-500"
+                                className={`ml-2 text-base md:text-lg ${isDarkMode ? "text-gray-400" : "text-gray-500"
                                     }`}
                             >
                                 ({(item as Docente | Estudiante).username})
@@ -203,7 +212,7 @@ export default function AdminEliminar() {
                 : "bg-white"
                 }`}
         >
-            <Header onLogout={() => navigate("/login")} />
+            <Header onLogout={handleLogout} />
 
             <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-8 mb-12">
                 <button
@@ -230,8 +239,8 @@ export default function AdminEliminar() {
                 </button>
 
                 <div
-                    className={`max-w-4xl mx-auto rounded-3xl shadow-lg overflow-hidden ${isDarkMode
-                        ? "bg-transparent shadow-gray-200"
+                    className={`max-w-4xl mx-auto rounded-3xl shadow-lg overflow-hidden border-2 border-blue-400 ${isDarkMode
+                        ? "bg-white border-blue-600"
                         : "bg-transparent shadow-blue-400"
                         }`}
                 >
@@ -255,13 +264,13 @@ export default function AdminEliminar() {
                                 <button
                                     key={tab}
                                     onClick={() => handleTabChange(tab)}
-                                    className={`px-4 py-2 rounded-full font-medium transition-all border ${opcion === tab
+                                    className={`px-4 py-2 rounded-full font-medium transition-all border text-xl ${opcion === tab
                                         ? isDarkMode
                                             ? "bg-blue-700 text-white shadow-md border-blue-900"
-                                            : "bg-blue-400 text-blue-800 shadow-md border-blue-400"
+                                            : "bg-blue-700 text-white shadow-md border-blue-400"
                                         : isDarkMode
-                                            ? "bg-gray-700 text-gray-300 hover:bg-gray-600 border-gray-600"
-                                            : "bg-gray-100 text-blue-600 hover:bg-gray-200 border-blue-400"
+                                            ? "bg-white text-blue-700 hover:bg-blue-400 border-blue-700"
+                                            : "bg-gray-100 text-blue-700 hover:bg-blue-400 border-blue-400"
                                         }`}
                                 >
                                     {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -276,7 +285,7 @@ export default function AdminEliminar() {
                             className={`w-full p-3 rounded-3xl font-medium transition-colors text-xl border-2 ${loading || seleccionados.length === 0
                                 ? isDarkMode
                                     ? "bg-gray-800  text-white opacity-25 cursor-not-allowed"
-                                    : "bg-gray-100  text-gray-400 cursor-not-allowed border-blue-200"
+                                    : "bg-gray-100  text-gray-400 cursor-not-allowed border-gray-300"
                                 : isDarkMode
                                     ? "bg-red-600 hover:bg-red-700 text-white"
                                     : "bg-red-500 hover:bg-red-600 text-white"

@@ -6,10 +6,15 @@ import { useAuthStore } from "../stores/Autenticacion";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import Header from "../components/shared/Header";
+import DarkModeToggle from "../components/shared/DarkModeToggle";
+import { useDarkMode } from '../hooks/useDarkMode';
+import React from 'react';
 
 export default function AdminCrear() {
     const navigate = useNavigate();
     const { token } = useAuthStore();
+    const { isDarkMode } = useDarkMode();
+    const { logout } = useAuthStore(); // Asegúrate de tener una función logout en tu store
 
     // Tab seleccionado
     const [opcion, setOpcion] = useState<"estudiante" | "docente" | "curso">("estudiante");
@@ -46,7 +51,8 @@ export default function AdminCrear() {
     };
 
     const handleLogout = () => {
-        navigate("/");
+        logout(); // Limpia el estado de autenticación
+        navigate('/'); // Redirige al login
     };
 
     // Limpia errores al escribir
@@ -207,7 +213,12 @@ export default function AdminCrear() {
     };
 
     return (
-        <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 to-white dark:from-gray-800 dark:to-gray-900">
+        <div
+            className={`min-h-screen flex flex-col ${isDarkMode
+                ? "bg-gradient-to-b from-black via-blue-400 to-white"
+                : "bg-white"
+                }`}
+        >
             <Header onLogout={handleLogout} />
 
             {/* Botón de regresar */}
@@ -236,12 +247,12 @@ export default function AdminCrear() {
                 Volver
             </motion.button>
 
-            <main className="flex-1 flex flex-col items-center justify-center px-4 sm:px-2">
+            <main className="flex-1 justify-center items-center flex flex-col gap-4 container mx-auto px-4 sm:px-6 lg:px-8 py-8 mb-12">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5 }}
-                    className="w-full max-w-2xl p-6 sm:p-8 bg-white rounded-3xl shadow-xl mt-16 mb-10 border border-blue-100"
+                    className="w-full max-w-2xl p-6 sm:p-8 bg-white rounded-3xl shadow-xl shadow-blue-300 mt-16 mb-10 border border-blue-400"
                 >
                     <h1 className="text-3xl md:text-4xl font-bold text-center text-blue-800 mb-8">
                         Crear Usuarios o Cursos
@@ -253,8 +264,8 @@ export default function AdminCrear() {
                             <motion.button
                                 key={tab}
                                 className={`px-4 sm:px-6 py-2 rounded-full font-semibold transition-all ${opcion === tab
-                                        ? "bg-blue-600 text-white shadow-md"
-                                        : "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                                    ? "bg-blue-600 text-white shadow-md"
+                                    : "bg-blue-100 text-blue-700 hover:bg-blue-200"
                                     }`}
                                 onClick={() => handleTabChange(tab)}
                                 whileHover={{ scale: 1.05 }}
@@ -335,8 +346,8 @@ export default function AdminCrear() {
                                             value={form.first_name}
                                             onChange={handleInput}
                                             className={`w-full px-4 py-3 border rounded-lg transition-all focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.first_name
-                                                    ? "border-red-500 ring-2 ring-red-200"
-                                                    : "border-gray-300"
+                                                ? "border-red-500 ring-2 ring-red-200"
+                                                : "border-gray-300"
                                                 }`}
                                             required
                                         />
@@ -373,8 +384,8 @@ export default function AdminCrear() {
                                             value={form.last_name}
                                             onChange={handleInput}
                                             className={`w-full px-4 py-3 border rounded-lg transition-all focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.last_name
-                                                    ? "border-red-500 ring-2 ring-red-200"
-                                                    : "border-gray-300"
+                                                ? "border-red-500 ring-2 ring-red-200"
+                                                : "border-gray-300"
                                                 }`}
                                             required
                                         />
@@ -411,8 +422,8 @@ export default function AdminCrear() {
                                             value={form.username}
                                             onChange={handleInput}
                                             className={`w-full px-4 py-3 border rounded-lg transition-all focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.username
-                                                    ? "border-red-500 ring-2 ring-red-200"
-                                                    : "border-gray-300"
+                                                ? "border-red-500 ring-2 ring-red-200"
+                                                : "border-gray-300"
                                                 }`}
                                             required
                                         />
@@ -449,8 +460,8 @@ export default function AdminCrear() {
                                             value={form.email}
                                             onChange={handleInput}
                                             className={`w-full px-4 py-3 border rounded-lg transition-all focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.email
-                                                    ? "border-red-500 ring-2 ring-red-200"
-                                                    : "border-gray-300"
+                                                ? "border-red-500 ring-2 ring-red-200"
+                                                : "border-gray-300"
                                                 }`}
                                             required
                                         />
@@ -489,8 +500,8 @@ export default function AdminCrear() {
                                                 value={form.password}
                                                 onChange={handleInput}
                                                 className={`w-full px-4 py-3 border rounded-lg transition-all focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10 ${errors.password
-                                                        ? "border-red-500 ring-2 ring-red-200"
-                                                        : "border-gray-300"
+                                                    ? "border-red-500 ring-2 ring-red-200"
+                                                    : "border-gray-300"
                                                     }`}
                                                 required
                                                 autoComplete="new-password"
@@ -624,8 +635,8 @@ export default function AdminCrear() {
                                         value={form.nombre_curso}
                                         onChange={handleInput}
                                         className={`w-full px-4 py-3 border rounded-lg transition-all focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.nombre_curso
-                                                ? "border-red-500 ring-2 ring-red-200"
-                                                : "border-gray-300"
+                                            ? "border-red-500 ring-2 ring-red-200"
+                                            : "border-gray-300"
                                             }`}
                                         required
                                     />
@@ -652,8 +663,8 @@ export default function AdminCrear() {
                             <motion.button
                                 type="submit"
                                 className={`w-full px-6 py-3 rounded-lg font-semibold transition-all mt-4 flex items-center justify-center gap-2 ${loading
-                                        ? "bg-gray-400 cursor-not-allowed"
-                                        : "bg-blue-600 text-white hover:bg-blue-700 shadow-md"
+                                    ? "bg-gray-400 cursor-not-allowed"
+                                    : "bg-blue-600 text-white hover:bg-blue-700 shadow-md"
                                     }`}
                                 disabled={loading}
                                 whileHover={!loading ? { scale: 1.02 } : {}}
@@ -722,6 +733,8 @@ export default function AdminCrear() {
                     </AnimatePresence>
                 </motion.div>
             </main>
+
+            <DarkModeToggle />
 
             <Footer />
         </div>
