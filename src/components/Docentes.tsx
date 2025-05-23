@@ -16,6 +16,7 @@ import { useDarkMode } from '../hooks/useDarkMode';
 // import { FaSyncAlt } from 'react-icons/fa'; // Importa el ícono de recargar
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 
 ChartJS.register(
   CategoryScale,
@@ -72,9 +73,7 @@ export default function Docentes() {
   useEffect(() => {
     if (!user) return;
 
-    const loadingToast = toast.loading('Cargando cursos...', {
-      toastId: 'loading-courses'
-    });
+
 
     fetch(`http://localhost:5000/api/docentes/${user.id}/cursos`, {
       headers: { Authorization: `Bearer ${token}` }
@@ -84,22 +83,15 @@ export default function Docentes() {
         return res.json();
       })
       .then((data: Curso[]) => {
-        toast.update(loadingToast, {
-          render: data.length > 0 ? `Cargados ${data.length} cursos` : 'No tienes cursos asignados',
-          type: data.length > 0 ? 'success' : 'info',
-          isLoading: false,
-          autoClose: 2000
+        console.log('Cargando cursos...', {
+          toastId: 'loading-courses'
         });
+
         setCursos(data);
       })
       .catch(err => {
         console.error('Error al obtener cursos:', err);
-        toast.update(loadingToast, {
-          render: 'Error al cargar tus cursos',
-          type: 'error',
-          isLoading: false,
-          autoClose: 3000
-        });
+
         setCursos([]);
       });
   }, [user, token]);
@@ -114,7 +106,7 @@ export default function Docentes() {
     }
 
     if (!selectedCourseId) {
-      toast.warning('Por favor selecciona un curso primero', {
+      console.log('Por favor selecciona un curso primero', {
         toastId: 'select-course-warning'
       });
       return;
@@ -245,7 +237,7 @@ export default function Docentes() {
       .then(async res => {
         if (!res.ok) {
           const error = await res.json().catch(() => ({}));
-          throw new Error(error.message || 'Error al generar el PDF');
+          throw new Error(error.message || "No hay evaluaciones disponibles");
         }
         return res.blob();
       })
@@ -420,7 +412,8 @@ export default function Docentes() {
         <div className="flex-1">
           <label
             htmlFor="courseSelect"
-            className={`block text-xl font-medium mb-1 ${isDarkMode ? "text-gray-600" : "text-gray-500"}`}
+            className={`block text-xl font-medium mb-1 ${isDarkMode ? "text-gray-600" : "text-gray-500"
+              }`}
           >
             Seleccione un curso:
           </label>
@@ -464,20 +457,23 @@ export default function Docentes() {
           onClick={descargarPDF}
           disabled={!selectedCourseId}
           className={`
-    w-full md:w-auto px-4 py-2 text-xl rounded-3xl font-semibold shadow-lg mt-2 md:mt-8
-    transition-all duration-200
-    hover:scale-110 focus:scale-110 hover:shadow-xl focus:shadow-xl
-    ${isDarkMode
-              ? "bg-red-700 text-white hover:bg-red-800"
-              : "bg-red-600 text-white hover:bg-red-700"
+            flex items-center text-center justify-center w-full md:w-auto px-6 py-2.5 text-xl rounded-3xl font-semibold shadow-lg mt-2 md:mt-8
+            transition-all duration-200
+            hover:shadow-xl focus:shadow-xl
+            ${!selectedCourseId
+              ? isDarkMode
+                ? "bg-gray-900 text-gray-100 opacity-20 cursor-not-allowed"
+                : "bg-gray-900 text-gray-100 opacity-20 cursor-not-allowed"
+              : isDarkMode
+                ? "bg-red-700 text-white hover:bg-red-800 shadow-gray-800"
+                : "bg-red-600 text-white hover:bg-red-700 shadow-gray-500"
             }
-    ${!selectedCourseId ? 'opacity-50 cursor-not-allowed' : ''}
-  `}
+          `}
         >
+          <ArrowDownTrayIcon className="w-7 h-7 mr-2" />
           Descargar PDF
         </button>
       </div>
-
 
       {/* Gráficos principales */}
       {mostrarEvaluaciones && evaluaciones.length > 0 && (

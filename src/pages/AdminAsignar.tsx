@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
-import Header from "../components/shared/Header";
-import Footer from "../components/shared/Footer";
-import { ToastContainer, toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useAuthStore } from "../stores/Autenticacion";
-import { useNavigate } from "react-router-dom";
+import { useDarkMode } from '../hooks/useDarkMode';
+import Header from "../components/shared/Header";
+import Footer from "../components/shared/Footer";
+import DarkModeToggle from "../components/shared/DarkModeToggle";
 import { motion, AnimatePresence } from "framer-motion";
-import { MdDelete } from "react-icons/md"; // <-- Ícono papelera
+import { MdDelete } from "react-icons/md";
 
 interface Docente {
     id: number;
@@ -24,8 +26,8 @@ interface Curso {
 export default function AdminAsignar() {
     const navigate = useNavigate();
     const { token } = useAuthStore();
+    const { isDarkMode } = useDarkMode();
 
-    // Estado
     const [docentes, setDocentes] = useState<Docente[]>([]);
     const [cursos, setCursos] = useState<Curso[]>([]);
     const [docenteSeleccionado, setDocenteSeleccionado] = useState<number | "">("");
@@ -36,51 +38,63 @@ export default function AdminAsignar() {
     const [loadingEliminar, setLoadingEliminar] = useState<number | null>(null);
 
     useEffect(() => {
-        fetch("http://localhost:5000/api/admin/listar-docentes", {
-            headers: { Authorization: `Bearer ${token}` },
-        })
-            .then((r) => r.json())
-            .then(setDocentes);
+        const cargarDatos = async () => {
+            try {
+                const [docentesRes, cursosRes] = await Promise.all([
+                    fetch("http://localhost:5000/api/admin/listar-docentes", {
+                        headers: { Authorization: `Bearer ${token}` },
+                    }),
+                    fetch("http://localhost:5000/api/admin/listar-cursos", {
+                        headers: { Authorization: `Bearer ${token}` },
+                    })
+                ]);
 
-        fetch("http://localhost:5000/api/admin/listar-cursos", {
-            headers: { Authorization: `Bearer ${token}` },
-        })
-            .then((r) => r.json())
-            .then(setCursos);
+                const docentesData = await docentesRes.json();
+                const cursosData = await cursosRes.json();
+
+                setDocentes(docentesData);
+                setCursos(cursosData);
+            } catch {
+                toast.error("Error al cargar los datos");
+            }
+        };
+
+        cargarDatos();
     }, [token]);
 
     useEffect(() => {
-        setCursosSeleccionados([]);
-        setCursosAsignados([]);
-        setCursosPorAsignar([]);
-        if (!docenteSeleccionado) return;
+        const cargarCursosDocente = async () => {
+            setCursosSeleccionados([]);
+            setCursosAsignados([]);
+            setCursosPorAsignar([]);
 
-        fetch(
-            `http://localhost:5000/api/admin/obtener-cursos-docente/${docenteSeleccionado}`,
-            { headers: { Authorization: `Bearer ${token}` } }
-        )
-            .then((r) => r.json())
-            .then((asignados: Curso[]) => {
+            if (!docenteSeleccionado) return;
+
+            try {
+                const response = await fetch(
+                    `http://localhost:5000/api/admin/obtener-cursos-docente/${docenteSeleccionado}`,
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+                const asignados: Curso[] = await response.json();
+
                 setCursosAsignados(asignados);
                 setCursosPorAsignar(
-                    cursos.filter(
-                        (curso) =>
-                            !asignados.some((asig) => asig.id === curso.id)
-                    )
+                    cursos.filter((curso) => !asignados.some((asig) => asig.id === curso.id))
                 );
-            });
-        // // eslint-disable-next-line react-hooks/exhaustive-deps
+            } catch {
+                toast.error("Error al cargar los cursos del docente");
+            }
+        };
+
+        cargarCursosDocente();
     }, [docenteSeleccionado, cursos, token]);
 
-    // Selección/deselección de cursos a asignar
     function handleToggleCurso(id: number) {
         setCursosSeleccionados((prev) =>
             prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
         );
     }
 
-    // Asignar cursos
-    // Función para asignar cursos corregida
     async function handleAsignar() {
         if (!docenteSeleccionado || cursosSeleccionados.length === 0) {
             toast.error("Selecciona un docente y al menos un curso.");
@@ -98,8 +112,8 @@ export default function AdminAsignar() {
                         Authorization: `Bearer ${token}`,
                     },
                     body: JSON.stringify({
-                        docente_id: docenteSeleccionado, // Enviamos un solo ID
-                        cursos_ids: cursosSeleccionados, // Enviamos array de cursos
+                        docente_id: docenteSeleccionado,
+                        cursos_ids: cursosSeleccionados,
                     }),
                 }
             );
@@ -114,41 +128,31 @@ export default function AdminAsignar() {
                 );
 
                 // Refrescar datos
-                fetch(
+                const response = await fetch(
                     `http://localhost:5000/api/admin/obtener-cursos-docente/${docenteSeleccionado}`,
                     { headers: { Authorization: `Bearer ${token}` } }
-                )
-                    .then((r) => r.json())
-                    .then((asignados: Curso[]) => {
-                        setCursosAsignados(asignados);
-                        setCursosPorAsignar(
-                            cursos.filter(
-                                (curso) => !asignados.some((asig) => asig.id === curso.id)
-                            )
-                        );
-                        setCursosSeleccionados([]);
-                    });
-            }
-            else if (res.status === 207) {
-                // Asignación parcial con errores
+                );
+                const asignados: Curso[] = await response.json();
+
+                setCursosAsignados(asignados);
+                setCursosPorAsignar(
+                    cursos.filter((curso) => !asignados.some((asig) => asig.id === curso.id))
+                );
+                setCursosSeleccionados([]);
+            } else if (res.status === 207) {
                 toast.warning(
                     `Asignación parcial: ${data.total_cursos_asignados} cursos asignados, pero con algunos errores`,
                     { autoClose: 4000 }
                 );
-                console.log("Errores parciales:", data.errores);
-            }
-            else {
+            } else {
                 toast.error(data.error || "Error al asignar cursos");
             }
-        } catch (error) {
+        } catch {
             setLoading(false);
             toast.error("Error de conexión con el backend.");
-            console.error("Error:", error);
         }
     }
 
-
-    // Quitar/desasignar un curso del docente (lo mueve de asignados a por asignar en tiempo real)
     async function handleQuitarCurso(cursoId: number) {
         if (!docenteSeleccionado) {
             toast.error("No se ha seleccionado un docente");
@@ -172,11 +176,9 @@ export default function AdminAsignar() {
             const data = await response.json();
 
             if (response.ok) {
-                // Actualizar el estado local
                 const nuevosCursosAsignados = cursosAsignados.filter(c => c.id !== cursoId);
                 setCursosAsignados(nuevosCursosAsignados);
 
-                // Agregar el curso a la lista de disponibles
                 const cursoDesasignado = cursos.find(c => c.id === cursoId);
                 if (cursoDesasignado) {
                     setCursosPorAsignar(prev => [...prev, cursoDesasignado]);
@@ -185,17 +187,14 @@ export default function AdminAsignar() {
                 toast.success(data.message || "Curso desasignado correctamente");
             } else {
                 toast.error(data.error || "Error al desasignar el curso");
-                console.error("Error en la desasignación:", data.details);
             }
-        } catch (error) {
+        } catch {
             toast.error("Error de conexión con el servidor");
-            console.error("Error al desasignar curso:", error);
         } finally {
             setLoadingEliminar(null);
         }
     }
 
-    // Animación de aparición para cursos asignados
     const animConfig = {
         initial: { opacity: 0, x: 30 },
         animate: { opacity: 1, x: 0 },
@@ -204,119 +203,198 @@ export default function AdminAsignar() {
     };
 
     return (
-        <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-100 to-white dark:from-gray-800 dark:to-gray-900">
-            <Header onLogout={() => navigate("/login")} />
-            <button
-                className="mt-24 absolute top-6 left-6 z-40 bg-blue-700 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-800 transition font-semibold"
-                onClick={() => navigate("/panel-admin")}
-                style={{ minWidth: 110 }}
-            >
-                ← Volver
-            </button>
-            <main className="flex-1 flex flex-col items-center justify-center px-2">
-                <div className="w-full max-w-6xl p-8 bg-white rounded-3xl shadow-xl mt-16 mb-10">
-                    <h1 className="text-3xl md:text-4xl font-bold text-center text-blue-800 mb-8">
-                        Asignar Cursos a Docentes
-                    </h1>
-                    <div className="flex flex-col md:flex-row gap-8 justify-center items-start w-full">
-                        {/* Columna 1: Docente */}
-                        <div className="w-full md:w-1/3">
-                            <h2 className="text-xl text-blue-700 font-semibold mb-4 text-center">Selecciona un Docente</h2>
-                            <select
-                                className="w-full px-4 py-2 border rounded-lg mb-2"
-                                value={docenteSeleccionado}
-                                onChange={(e) =>
-                                    setDocenteSeleccionado(Number(e.target.value) || "")
-                                }
-                            >
-                                <option value="">Seleccione docente</option>
-                                {docentes.map((d) => (
-                                    <option key={d.id} value={d.id}>
-                                        {d.first_name} {d.last_name} ({d.username})
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                        {/* Línea divisoria */}
-                        <div className="hidden md:block border-r-4 border-cyan-300 h-[260px] mx-2" />
-                        {/* Columna 2: Cursos por asignar */}
-                        <div className="w-full md:w-1/3 flex flex-col">
-                            <h2 className="text-xl text-blue-700 font-semibold mb-4 text-center">Cursos por asignar</h2>
-                            <div className="flex flex-col gap-2">
-                                <AnimatePresence>
-                                    {cursosPorAsignar.map((curso) => (
-                                        <motion.div
-                                            key={curso.id}
-                                            {...animConfig}
-                                            className={`flex items-center justify-between px-4 py-2 rounded-lg shadow cursor-pointer border ${cursosSeleccionados.includes(curso.id)
-                                                ? "bg-green-100 border-green-700"
-                                                : "bg-gray-50 border-gray-300"
-                                                }`}
-                                            onClick={() => handleToggleCurso(curso.id)}
-                                        >
-                                            <span className="font-medium">{curso.nombre}</span>
-                                            {cursosSeleccionados.includes(curso.id) && (
-                                                <span className="text-green-700 font-bold ml-4">✓</span>
-                                            )}
-                                        </motion.div>
-                                    ))}
-                                    {cursosPorAsignar.length === 0 && (
-                                        <div className="text-gray-400 text-center py-10">
-                                            Todos los cursos ya están asignados.
-                                        </div>
-                                    )}
-                                </AnimatePresence>
-                            </div>
-                        </div>
-                        {/* Línea divisoria */}
-                        <div className="hidden md:block border-r-4 border-cyan-300 h-[260px] mx-2" />
-                        {/* Columna 3: Cursos asignados */}
-                        <div className="w-full md:w-1/3 flex flex-col">
-                            <h2 className="text-xl text-blue-700 font-semibold mb-4 text-center">Cursos asignados</h2>
-                            <div className="flex flex-col gap-2">
-                                <AnimatePresence>
-                                    {cursosAsignados.map((curso) => (
-                                        <motion.div
-                                            key={curso.id}
-                                            {...animConfig}
-                                            className="flex items-center px-4 py-2 rounded-lg shadow border bg-blue-50 border-blue-400 justify-between"
-                                        >
-                                            <span className="font-medium">{curso.nombre}</span>
-                                            <button
-                                                className="ml-2 bg-red-500 hover:bg-red-600 rounded-lg p-1 transition"
-                                                disabled={loadingEliminar === curso.id}
-                                                title="Desasignar curso"
-                                                onClick={() => handleQuitarCurso(curso.id)}
-                                            >
-                                                <MdDelete className="text-white text-xl" />
-                                            </button>
-                                        </motion.div>
-                                    ))}
-                                    {cursosAsignados.length === 0 && (
-                                        <div className="text-gray-400 text-center py-10">
-                                            No tiene cursos asignados.
-                                        </div>
-                                    )}
-                                </AnimatePresence>
-                            </div>
-                        </div>
+        <div className={`min-h-screen flex flex-col ${isDarkMode ? "bg-gradient-to-b from-black via-blue-400 to-white" : "bg-gray-50"}`}>
+            <Header onLogout={() => navigate("/")} />
+
+            <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-8 mb-12">
+                <button
+                    onClick={() => navigate("/panel-admin")}
+                    className={`mb-6 flex items-center px-4 py-2 rounded-3xl font-medium transition-colors ${isDarkMode
+                            ? "bg-blue-700 hover:bg-blue-600 text-white"
+                            : "bg-blue-100 hover:bg-blue-200 text-blue-800"
+                        }`}
+                >
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                    Volver
+                </button>
+
+                <div className={`max-w-6xl mx-auto rounded-3xl shadow-lg overflow-hidden ${isDarkMode
+                        ? "bg-transparent shadow-gray-200"
+                        : "bg-white shadow-blue-400"
+                    }`}>
+                    <div className={`p-6 shadow-lg ${isDarkMode
+                            ? "bg-gradient-to-br from-blue-400 via-white to-blue-400 shadow-blue-400"
+                            : "bg-gradient-to-br from-blue-300 via-white to-blue-300 shadow-blue-200"
+                        }`}>
+                        <h1 className={`text-2xl md:text-3xl font-bold text-center ${isDarkMode ? "text-blue-800" : "text-blue-800"
+                            }`}>
+                            Asignar Cursos a Docentes
+                        </h1>
                     </div>
-                    {/* Botón de asignar */}
-                    <div className="flex justify-center mt-10">
-                        <button
-                            className={`px-8 py-3 rounded-2xl font-semibold shadow-lg transition ${loading
-                                ? "bg-gray-400 cursor-not-allowed"
-                                : "bg-cyan-600 text-white hover:bg-cyan-800"
-                                }`}
-                            disabled={loading}
-                            onClick={handleAsignar}
-                        >
-                            {loading ? "Asignando..." : "Asignar Cursos"}
-                        </button>
+
+                    <div className="p-6">
+                        <div className="flex flex-col md:flex-row gap-8 justify-center items-start w-full">
+                            {/* Columna 1: Docente */}
+                            <div className="w-full md:w-1/3">
+                                <h2 className={`text-xl font-semibold mb-4 text-center ${isDarkMode ? "text-blue-300" : "text-blue-700"
+                                    }`}>
+                                    Selecciona un Docente
+                                </h2>
+                                <select
+                                    className={`w-full p-3 rounded-3xl border ${isDarkMode
+                                            ? "bg-gray-700 border-gray-600 text-white"
+                                            : "bg-white border-gray-300 text-gray-800"
+                                        }`}
+                                    value={docenteSeleccionado}
+                                    onChange={(e) => setDocenteSeleccionado(Number(e.target.value) || "")}
+                                >
+                                    <option value="">Seleccione docente</option>
+                                    {docentes.map((d) => (
+                                        <option key={d.id} value={d.id}>
+                                            {d.first_name} {d.last_name} ({d.username})
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Línea divisoria */}
+                            <div className={`hidden md:block border-r-4 ${isDarkMode ? "border-blue-500" : "border-cyan-300"
+                                } h-[260px] mx-2`} />
+
+                            {/* Columna 2: Cursos por asignar */}
+                            <div className="w-full md:w-1/3 flex flex-col">
+                                <h2 className={`text-xl font-semibold mb-4 text-center ${isDarkMode ? "text-blue-300" : "text-blue-700"
+                                    }`}>
+                                    Cursos por asignar
+                                </h2>
+                                <div className="flex flex-col gap-2">
+                                    <AnimatePresence>
+                                        {cursosPorAsignar.map((curso) => (
+                                            <motion.div
+                                                key={curso.id}
+                                                {...animConfig}
+                                                className={`flex items-center justify-between p-3 rounded-3xl shadow cursor-pointer border ${cursosSeleccionados.includes(curso.id)
+                                                        ? isDarkMode
+                                                            ? "bg-green-800 border-green-600"
+                                                            : "bg-green-100 border-green-700"
+                                                        : isDarkMode
+                                                            ? "bg-gray-700 border-gray-600"
+                                                            : "bg-gray-50 border-gray-300"
+                                                    }`}
+                                                onClick={() => handleToggleCurso(curso.id)}
+                                            >
+                                                <span className="font-medium">{curso.nombre}</span>
+                                                {cursosSeleccionados.includes(curso.id) && (
+                                                    <span className={`ml-4 font-bold ${isDarkMode ? "text-green-300" : "text-green-700"
+                                                        }`}>✓</span>
+                                                )}
+                                            </motion.div>
+                                        ))}
+                                        {cursosPorAsignar.length === 0 && (
+                                            <div className={`text-center py-10 ${isDarkMode ? "text-gray-400" : "text-gray-500"
+                                                }`}>
+                                                Todos los cursos ya están asignados.
+                                            </div>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
+                            </div>
+
+                            {/* Línea divisoria */}
+                            <div className={`hidden md:block border-r-4 ${isDarkMode ? "border-blue-500" : "border-cyan-300"
+                                } h-[260px] mx-2`} />
+
+                            {/* Columna 3: Cursos asignados */}
+                            <div className="w-full md:w-1/3 flex flex-col">
+                                <h2 className={`text-xl font-semibold mb-4 text-center ${isDarkMode ? "text-blue-300" : "text-blue-700"
+                                    }`}>
+                                    Cursos asignados
+                                </h2>
+                                <div className="flex flex-col gap-2">
+                                    <AnimatePresence>
+                                        {cursosAsignados.map((curso) => (
+                                            <motion.div
+                                                key={curso.id}
+                                                {...animConfig}
+                                                className={`flex items-center p-3 rounded-3xl shadow border justify-between ${isDarkMode
+                                                        ? "bg-gray-700 border-gray-600"
+                                                        : "bg-blue-50 border-blue-400"
+                                                    }`}
+                                            >
+                                                <span className="font-medium">{curso.nombre}</span>
+                                                <button
+                                                    className={`ml-2 rounded-lg p-2 transition ${loadingEliminar === curso.id
+                                                            ? "bg-gray-500"
+                                                            : isDarkMode
+                                                                ? "bg-red-600 hover:bg-red-700"
+                                                                : "bg-red-500 hover:bg-red-600"
+                                                        }`}
+                                                    disabled={loadingEliminar === curso.id}
+                                                    title="Desasignar curso"
+                                                    onClick={() => handleQuitarCurso(curso.id)}
+                                                >
+                                                    <MdDelete className="text-white text-xl" />
+                                                </button>
+                                            </motion.div>
+                                        ))}
+                                        {cursosAsignados.length === 0 && (
+                                            <div className={`text-center py-10 ${isDarkMode ? "text-gray-400" : "text-gray-500"
+                                                }`}>
+                                                No tiene cursos asignados.
+                                            </div>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Botón de asignar */}
+                        <div className="flex justify-center mt-10">
+                            <button
+                                className={`px-8 py-3 rounded-3xl font-medium shadow-lg transition ${loading
+                                        ? "bg-gray-400 cursor-not-allowed"
+                                        : isDarkMode
+                                            ? "bg-blue-600 hover:bg-blue-700 text-white"
+                                            : "bg-blue-500 hover:bg-blue-600 text-white"
+                                    }`}
+                                disabled={loading}
+                                onClick={handleAsignar}
+                            >
+                                {loading ? (
+                                    <span className="flex items-center justify-center">
+                                        <svg
+                                            className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <circle
+                                                className="opacity-25"
+                                                cx="12"
+                                                cy="12"
+                                                r="10"
+                                                stroke="currentColor"
+                                                strokeWidth="4"
+                                            ></circle>
+                                            <path
+                                                className="opacity-75"
+                                                fill="currentColor"
+                                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                            ></path>
+                                        </svg>
+                                        Asignando...
+                                    </span>
+                                ) : (
+                                    `Asignar Cursos (${cursosSeleccionados.length})`
+                                )}
+                            </button>
+                        </div>
                     </div>
                 </div>
             </main>
-            <ToastContainer />
+
+            <DarkModeToggle />
+
             <Footer />
         </div>
     );

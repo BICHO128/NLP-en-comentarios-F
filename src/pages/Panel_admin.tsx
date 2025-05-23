@@ -8,7 +8,14 @@ import { useDarkMode } from '../hooks/useDarkMode';
 import { useNavigate } from 'react-router-dom';
 import ModalConfirmarClave from '../components/ModalConfirmarClave'; // la ruta según tu estructura
 import { Menu } from '@headlessui/react';
-import { Bars3Icon } from '@heroicons/react/24/outline'; // Iconos para el menú
+import {
+  Bars3Icon,
+  DocumentPlusIcon,
+  PencilSquareIcon,
+  UserGroupIcon,
+  TrashIcon,
+  ArrowDownTrayIcon
+} from '@heroicons/react/24/outline'; // Iconos para el menú
 
 
 const PanelAdmin = () => {
@@ -131,119 +138,222 @@ const PanelAdmin = () => {
         <Header onLogout={handleLogout} />
       </div>
 
-      {/* Menú lateral para pantallas pequeñas */}
+      {/* Menú lateral para pantallas pequeñas - Versión profesional */}
       <div className="p-4 sm:hidden">
         <Menu as="div" className="relative">
-          <Menu.Button className="flex items-center justify-center w-12 h-12 bg-gray-200 rounded-full dark:bg-gray-200">
-
-            <Bars3Icon className="w-10 h-10 text-gray-800 dark:text-white" />
+          {/* Botón del menú */}
+          <Menu.Button
+            className="flex items-center justify-center w-12 h-12 bg-gray-200 rounded-full dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+            aria-label="Menú de administración"
+          >
+            <Bars3Icon className="w-6 h-6 text-gray-800 dark:text-gray-200" />
           </Menu.Button>
-          <Menu.Items className="absolute left-0 z-50 mt-2 w-48 origin-top-left bg-white divide-y divide-gray-200 rounded-md shadow-lg dark:bg-gray-800 dark:divide-gray-700">
-            <Menu.Item>
-              {({ active }) => (
-                <button
-                  className={`${active ? "bg-gray-100 dark:bg-gray-700" : ""
-                    } block w-full px-4 py-2 text-left text-sm text-gray-800 dark:text-white`}
-                  onClick={() => handleIntentarIr("/admin/crear")}
-                >
-                  Crear usuarios o cursos
-                </button>
-              )}
-            </Menu.Item>
-            <Menu.Item>
-              {({ active }) => (
-                <button
-                  className={`${active ? "bg-gray-100 dark:bg-gray-700" : ""
-                    } block w-full px-4 py-2 text-left text-sm text-gray-800 dark:text-white`}
-                  onClick={() => handleIntentarIr("/admin/actualizar")}
-                >
-                  Actualizar información
-                </button>
-              )}
-            </Menu.Item>
-            <Menu.Item>
-              {({ active }) => (
-                <button
-                  className={`${active ? "bg-gray-100 dark:bg-gray-700" : ""
-                    } block w-full px-4 py-2 text-left text-sm text-gray-800 dark:text-white`}
-                  onClick={() => handleIntentarIr("/admin/asignar")}
-                >
-                  Asignación de cursos
-                </button>
-              )}
-            </Menu.Item>
-            <Menu.Item>
-              {({ active }) => (
-                <button
-                  className={`${active ? "bg-gray-100 dark:bg-gray-700" : ""
-                    } block w-full px-4 py-2 text-left text-sm text-gray-800 dark:text-white`}
-                  onClick={() => handleIntentarIr("/admin/eliminar")}
-                >
-                  Eliminación de usuarios o cursos
-                </button>
-              )}
-            </Menu.Item>
+
+          {/* Items del menú */}
+          <Menu.Items
+            className={`absolute left-0 z-50 mt-2 w-56 origin-top-left rounded-3xl shadow-xl ring-1 ring-opacity-5 divide-y focus:outline-none transition-all duration-100 transform border
+              ${isDarkMode
+                ? "bg-gray-800 dark:bg-gray-800 ring-gray-700 dark:ring-gray-700 divide-gray-400 "
+                : "bg-gradient-to-br from-blue-200 via-white to-blue-100 ring-black divide-blue-300 border-blue-300"
+              }
+            `}
+          >
+            {/* Primer ítem */}
+            <div className="px-1 py-1">
+              <Menu.Item>
+                {({ active }) => (
+                  <button
+                    className={`group flex w-full items-center px-4 py-3 text-sm rounded-b-md rounded-t-2xl transition-all duration-150 ${isDarkMode
+                      ? `${active ? "bg-blue-600 text-white" : "text-gray-200"
+                      }`
+                      : `${active
+                        ? "bg-blue-200 text-blue-800"
+                        : "text-blue-600"
+                      }`
+                      }`}
+                    onClick={() => handleIntentarIr("/admin/crear")}
+                  >
+                    <DocumentPlusIcon className="w-5 h-5 mr-3" />
+                    Crear usuarios o cursos
+                  </button>
+                )}
+              </Menu.Item>
+            </div>
+
+            {/* Segundo ítem */}
+            <div className="px-1 py-1">
+              <Menu.Item>
+                {({ active }) => (
+                  <button
+                    className={`group flex w-full items-center px-4 py-3 text-sm rounded-lg transition-all duration-150 ${isDarkMode
+                      ? `${active ? "bg-blue-600 text-white" : "text-gray-200"
+                      }`
+                      : `${active
+                        ? "bg-blue-200 text-blue-800"
+                        : "text-blue-600"
+                      }`
+                      }`}
+                    onClick={() => handleIntentarIr("/admin/actualizar")}
+                  >
+                    <PencilSquareIcon className="w-5 h-5 mr-3" />
+                    Actualizar información
+                  </button>
+                )}
+              </Menu.Item>
+            </div>
+
+            {/* Tercer ítem */}
+            <div className="px-1 py-1">
+              <Menu.Item>
+                {({ active }) => (
+                  <button
+                    className={`group flex w-full items-center px-4 py-3 text-sm rounded-lg transition-all duration-150 ${isDarkMode
+                      ? `${active ? "bg-blue-600 text-white" : "text-gray-200"
+                      }`
+                      : `${active
+                        ? "bg-blue-200 text-blue-800"
+                        : "text-blue-600"
+                      }`
+                      }`}
+                    onClick={() => handleIntentarIr("/admin/asignar")}
+                  >
+                    <UserGroupIcon className="w-5 h-5 mr-3" />
+                    Asignación de cursos
+                  </button>
+                )}
+              </Menu.Item>
+            </div>
+
+            {/* Cuarto ítem */}
+            <div className="px-1 py-1">
+              <Menu.Item>
+                {({ active }) => (
+                  <button
+                    className={`group flex w-full items-center px-4 py-3 text-sm rounded-lg transition-all duration-150 ${isDarkMode
+                      ? `${active ? "bg-blue-600 text-white" : "text-gray-200"
+                      }`
+                      : `${active
+                        ? "bg-blue-200 text-blue-800"
+                        : "text-blue-600"
+                      }`
+                      }`}
+                    onClick={() => handleIntentarIr("/admin/eliminar")}
+                  >
+                    <TrashIcon className="w-5 h-5 mr-3" />
+                    Eliminación de usuarios o cursos
+                  </button>
+                )}
+              </Menu.Item>
+            </div>
+
+            {/* Botón de descarga */}
+            <div className="px-1 py-1">
+              <Menu.Item>
+                {({ active }) => (
+                  <button
+                    className={`group flex w-full items-center justify-center px-4 py-3 text-sm rounded-3xl transition-all duration-150 ${isDarkMode
+                      ? `${active
+                        ? "bg-green-700 text-white"
+                        : "bg-green-600 text-white"
+                      }`
+                      : `${active
+                        ? "bg-green-600 text-white"
+                        : "bg-green-500 text-white"
+                      }`
+                      }`}
+                    onClick={descargarExcelAdmin}
+                  >
+                    <ArrowDownTrayIcon className="w-5 h-5 mr-2" />
+                    Descargar Excel
+                  </button>
+                )}
+              </Menu.Item>
+            </div>
           </Menu.Items>
         </Menu>
       </div>
 
-      {/* BLOQUE DE ACCIONES ADMIN */}
-      <div className="w-auto ml-14 mr-14">
-        {/* Contenedor de botones para pantallas grandes */}
+      {/* Panel horizontal de administración - Versión responsiva unificada */}
+      <div className="w-full px-4 sm:px-6 lg:px-8">
+        {/* Contenedor principal - solo visible en pantallas > sm */}
         <div
-          className={`hidden sm:flex w-full max-w-screen-2xl mx-auto mt-0 bg-gradient-to-br 
-            ${isDarkMode
-              ? "from-gray-900 to-gray-800"
-              : "from-blue-100 via-white to-blue-200"
-            } border ${isDarkMode ? "border-gray-700" : "border-blue-300"
-            } rounded-b-3xl shadow-md p-2 flex-wrap items-center justify-between gap-2 px-4 sm:px-6 lg:px-8`}
+          className={`hidden sm:flex w-full max-w-screen-2xl mx-auto mt-0 
+      ${isDarkMode
+              ? "bg-gray-800 border-gray-700 shadow-gray-400 shadow-lg"
+              : "bg-white border-blue-200 shadow-blue-200 shadow-lg"
+            } border rounded-b-3xl p-3 items-center justify-between flex-wrap`}
         >
-          <button
-            className={`text-sm px-4 py-2 rounded-md font-medium transition ${isDarkMode
-              ? "bg-gray-800 text-white hover:bg-gray-700"
-              : "bg-white text-blue-800 hover:bg-blue-100"
-              }`}
-            onClick={() => handleIntentarIr("/admin/crear")}
-          >
-            Crear usuarios o cursos
-          </button>
-          <button
-            className={`text-sm px-4 py-2 rounded-md font-medium transition ${isDarkMode
-              ? "bg-gray-800 text-white hover:bg-gray-700"
-              : "bg-white text-blue-800 hover:bg-blue-100"
-              }`}
-            onClick={() => handleIntentarIr("/admin/actualizar")}
-          >
-            Actualizar información
-          </button>
-          <button
-            className={`text-sm px-4 py-2 rounded-md font-medium transition ${isDarkMode
-              ? "bg-gray-800 text-white hover:bg-gray-700"
-              : "bg-white text-blue-800 hover:bg-blue-100"
-              }`}
-            onClick={() => handleIntentarIr("/admin/asignar")}
-          >
-            Asignación de cursos
-          </button>
-          <button
-            className={`text-sm px-4 py-2 rounded-md font-medium transition ${isDarkMode
-              ? "bg-gray-800 text-white hover:bg-gray-700"
-              : "bg-white text-blue-800 hover:bg-blue-100"
-              }`}
-            onClick={() => handleIntentarIr("/admin/eliminar")}
-          >
-            Eliminación de usuarios o cursos
-          </button>
-          <button
-            className={`text-sm px-4 py-2 rounded-md font-medium transition ${isDarkMode
-              ? "bg-green-700 text-white hover:bg-green-800"
-              : "bg-green-600 text-white hover:bg-green-700"
-              }`}
-            onClick={descargarExcelAdmin}
-          >
-            Descargar Excel
-          </button>
+          {/* Grupo de botones principales */}
+          <div className="flex items-center flex-wrap gap-2">
+            {/* Botón Crear */}
+            <button
+              className={`group flex items-center px-8 py-2.5 rounded-lg text-base md:text-lg font-medium transition-all duration-200 min-w-max
+          ${isDarkMode
+                  ? "text-gray-200 hover:bg-gray-700 hover:text-white"
+                  : "text-blue-600 hover:bg-blue-50 hover:text-blue-600"
+                }`}
+              onClick={() => handleIntentarIr("/admin/crear")}
+            >
+              <DocumentPlusIcon className="w-6 h-6 md:w-7 md:h-7 mr-2 flex-shrink-0" />
+              <span className="truncate">Crear usuarios o cursos</span>
+            </button>
+
+            {/* Botón Actualizar */}
+            <button
+              className={`group flex items-center px-8 py-2.5 rounded-lg text-base md:text-lg font-medium transition-all duration-200 min-w-max
+          ${isDarkMode
+                  ? "text-gray-200 hover:bg-gray-700 hover:text-white"
+                  : "text-blue-600 hover:bg-blue-50 hover:text-blue-600"
+                }`}
+              onClick={() => handleIntentarIr("/admin/actualizar")}
+            >
+              <PencilSquareIcon className="w-6 h-6 md:w-7 md:h-7 mr-2 flex-shrink-0" />
+              <span className="truncate">Actualizar información</span>
+            </button>
+
+            {/* Botón Asignar */}
+            <button
+              className={`group flex items-center px-8 py-2.5 rounded-lg text-base md:text-lg font-medium transition-all duration-200 min-w-max
+          ${isDarkMode
+                  ? "text-gray-200 hover:bg-gray-700 hover:text-white"
+                  : "text-blue-600 hover:bg-blue-50 hover:text-blue-600"
+                }`}
+              onClick={() => handleIntentarIr("/admin/asignar")}
+            >
+              <UserGroupIcon className="w-6 h-6 md:w-7 md:h-7 mr-2 flex-shrink-0" />
+              <span className="truncate">Asignación de cursos</span>
+            </button>
+
+            {/* Botón Eliminar */}
+            <button
+              className={`group flex items-center px-8 py-2.5 rounded-lg text-base md:text-lg font-medium transition-all duration-200 min-w-max
+          ${isDarkMode
+                  ? "text-gray-200 hover:bg-gray-700 hover:text-white"
+                  : "text-blue-600 hover:bg-blue-50 hover:text-blue-600"
+                }`}
+              onClick={() => handleIntentarIr("/admin/eliminar")}
+            >
+              <TrashIcon className="w-6 h-6 md:w-7 md:h-7 mr-2 flex-shrink-0" />
+              <span className="truncate">Eliminar usuarios/cursos</span>
+            </button>
+          </div>
+
+          {/* Botón de acción destacado */}
+          <div className="group flex items-center px-8 py-2 rounded-lg text-base md:text-lg font-medium transition-all duration-200 min-w-max ">
+            <button
+              className={` group flex items-center px-4 py-2 rounded-2xl md:rounded-3xl text-base md:text-lg font-medium transition-all duration-200 shadow-lg hover:shadow-lg mt-2 sm:mt-0 flex-shrink-0  md:ml-0
+        ${isDarkMode
+                  ? "bg-green-600 hover:bg-green-700 text-white shadow-gray-400"
+                  : "bg-green-500 hover:bg-green-600 text-white shadow-gray-400"
+                }`}
+              onClick={descargarExcelAdmin}
+            >
+              <ArrowDownTrayIcon className="w-6 h-6 md:w-7 md:h-7 mr-1 flex-shrink-0" />
+              <span className="truncate">Descargar Excel</span>
+            </button>
+          </div>
         </div>
+
         <ModalConfirmarClave
           open={modalOpen}
           onClose={() => setModalOpen(false)}
@@ -262,12 +372,12 @@ const PanelAdmin = () => {
               <div
                 className={`
         w-full
-        bg-gradient-to-br from-blue-200 via-white to-blue-100
-        border border-blue-300 rounded-3xl shadow-xl p-6 mb-8
+        bg-gradient-to-br from-blue-200 via-white to-blue-200
+        border border-blue-300 rounded-3xl shadow-lg p-6 mb-8
         transition-all duration-800 hover:shadow-blue-200 hover:scale-[1.01] animate-fade-in
         ${isDarkMode
                     ? "bg-gray-900 border-gray-700 text-blue-900"
-                    : "text-blue-900"
+                    : "text-blue-900 shadow-blue-200 shadow-lg"
                   }
       `}
               >
@@ -276,7 +386,10 @@ const PanelAdmin = () => {
                     ¡Bienvenido(a), {user.username}!
                   </h2>
                   <p className="text-xl ml-3 text-gray-700">
-                    A su panel de administración del sistema de evaluación docente. Aquí podrá visualizar los resultados de las evaluaciones realizadas por los estudiantes, incluyendo análisis de comentarios y gráficos estadísticos.
+                    A su panel de administración del sistema de evaluación
+                    docente. Aquí podrá visualizar los resultados de las
+                    evaluaciones realizadas por los estudiantes, incluyendo
+                    análisis de comentarios y gráficos estadísticos.
                   </p>
                 </div>
               </div>

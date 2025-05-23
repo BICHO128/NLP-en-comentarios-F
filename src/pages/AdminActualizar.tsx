@@ -1,10 +1,12 @@
-import { useState, useEffect, ChangeEvent } from "react";
-import Header from "../components/shared/Header";
-import Footer from "../components/shared/Footer";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useAuthStore } from "../stores/Autenticacion";
+import { useDarkMode } from '../hooks/useDarkMode';
+import Header from "../components/shared/Header";
+import Footer from "../components/shared/Footer";
+import DarkModeToggle from "../components/shared/DarkModeToggle";
 
 interface Docente {
     id: number;
@@ -33,7 +35,7 @@ type FormUsuario = {
     last_name?: string;
     username?: string;
     email?: string;
-    password?: string;
+    password: string;
 };
 
 type FormCurso = {
@@ -46,114 +48,151 @@ type Opcion = "docente" | "estudiante" | "curso";
 export default function AdminActualizar() {
     const navigate = useNavigate();
     const { token } = useAuthStore();
+    const { isDarkMode } = useDarkMode();
 
-    // Tabs: docente, estudiante, curso
     const [opcion, setOpcion] = useState<Opcion>("docente");
-
-    // Listas
     const [listaDocentes, setListaDocentes] = useState<Docente[]>([]);
     const [listaEstudiantes, setListaEstudiantes] = useState<Estudiante[]>([]);
     const [listaCursos, setListaCursos] = useState<Curso[]>([]);
-
-    // Seleccionado (id)
     const [seleccionado, setSeleccionado] = useState<number | "">("");
-
-    // Form
     const [form, setForm] = useState<FormUsuario | FormCurso>({});
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState<{ [k: string]: string }>({});
+    const [showPassword, setShowPassword] = useState(false);
 
     // Cargar listas desde backend
     useEffect(() => {
-        if (opcion === "docente") {
-            fetch("http://localhost:5000/api/admin/listar-docentes")
-                .then((r) => r.json())
-                .then(setListaDocentes);
-        } else if (opcion === "estudiante") {
-            fetch("http://localhost:5000/api/admin/listar-estudiantes")
-                .then((r) => r.json())
-                .then(setListaEstudiantes);
-        } else if (opcion === "curso") {
-            fetch("http://localhost:5000/api/admin/listar-cursos")
-                .then((r) => r.json())
-                .then(setListaCursos);
-        }
-        setSeleccionado("");
-        setForm({});
-        setErrors({});
+        const cargarDatos = async () => {
+            try {
+                let url = "";
+                if (opcion === "docente") {
+                    url = "http://localhost:5000/api/admin/listar-docentes";
+                } else if (opcion === "estudiante") {
+                    url = "http://localhost:5000/api/admin/listar-estudiantes";
+                } else if (opcion === "curso") {
+                    url = "http://localhost:5000/api/admin/listar-cursos";
+                }
+
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (opcion === "docente") {
+                    setListaDocentes(data);
+                } else if (opcion === "estudiante") {
+                    setListaEstudiantes(data);
+                } else if (opcion === "curso") {
+                    setListaCursos(data);
+                }
+
+                setSeleccionado("");
+                setForm({});
+                setErrors({});
+            } catch {
+                toast.error("Error al cargar los datos");
+            }
+        };
+
+        cargarDatos();
     }, [opcion]);
 
     // Cargar datos del elemento seleccionado
     useEffect(() => {
-        setForm({});
-        setErrors({});
-        if (seleccionado === "") return;
+        const cargarDetalle = async () => {
+            if (seleccionado === "") return;
 
-        let url = "";
-        if (opcion === "docente") {
-            url = `http://localhost:5000/api/admin/obtener-docente/${seleccionado}`;
-        } else if (opcion === "estudiante") {
-            url = `http://localhost:5000/api/admin/obtener-estudiante/${seleccionado}`;
-        } else if (opcion === "curso") {
-            url = `http://localhost:5000/api/admin/obtener-curso/${seleccionado}`;
-        }
+            let url = "";
+            if (opcion === "docente") {
+                url = `http://localhost:5000/api/admin/obtener-docente/${seleccionado}`;
+            } else if (opcion === "estudiante") {
+                url = `http://localhost:5000/api/admin/obtener-estudiante/${seleccionado}`;
+            } else if (opcion === "curso") {
+                url = `http://localhost:5000/api/admin/obtener-curso/${seleccionado}`;
+            }
 
-        if (!url) return;
-
-        fetch(url, {
-            headers: { Authorization: `Bearer ${token}` }
-        })
-            .then((r) => r.json())
-            .then((data) => {
-                if (opcion === "curso") setForm({ id: data.id, nombre: data.nombre });
-                else setForm({
-                    id: data.id,
-                    first_name: data.first_name,
-                    last_name: data.last_name,
-                    username: data.username,
-                    email: data.email,
+            try {
+                const response = await fetch(url, {
+                    headers: { Authorization: `Bearer ${token}` },
                 });
-            });
+                const data = await response.json();
+
+                if (opcion === "curso") {
+                    setForm({ id: data.id, nombre: data.nombre });
+                } else {
+                    setForm({
+                        id: data.id,
+                        first_name: data.first_name,
+                        last_name: data.last_name,
+                        username: data.username,
+                        email: data.email,
+                    });
+                }
+            } catch {
+                toast.error("Error al cargar los detalles");
+            }
+        };
+
+        cargarDetalle();
     }, [seleccionado, opcion, token]);
 
-
-    // Maneja los cambios en los formularios
-    const handleInput = (e: ChangeEvent<HTMLInputElement>) => {
-        setForm({ ...form, [e.target.name]: e.target.value });
-        setErrors((prev) => ({ ...prev, [e.target.name]: "" }));
+    const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        setForm((prev) => ({ ...prev, [name]: value }));
+        setErrors((prev) => ({ ...prev, [name]: "" }));
     };
 
-    // Validación avanzada por campo antes de enviar
+    // Modificación en la función validar para mejor manejo de errores
     const validar = (): boolean => {
         const nuevosErrores: { [k: string]: string } = {};
+        const f = form as FormUsuario;
 
         if (opcion === "docente" || opcion === "estudiante") {
-            const f = form as FormUsuario;
-            if (f.email && !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(f.email))
-                nuevosErrores.email = "Correo inválido";
-            if (f.password && f.password.length < 5)
-                nuevosErrores.password = "Contraseña: mínimo 5 caracteres";
-            if (f.password && !/[A-Z]/.test(f.password))
-                nuevosErrores.password = "Contraseña: al menos 1 mayúscula";
-            if (f.password && !/[!@#$%^&*(),.?":{}|<>]/.test(f.password))
-                nuevosErrores.password = "Contraseña: al menos 1 caracter especial";
-        }
-        if (opcion === "curso") {
-            const f = form as FormCurso;
-            if (f.nombre && f.nombre.trim().length === 0)
-                nuevosErrores.nombre = "El nombre es obligatorio";
+            if (!f.first_name?.trim()) nuevosErrores.first_name = "El nombre es requerido";
+            if (!f.last_name?.trim()) nuevosErrores.last_name = "El apellido es requerido";
+
+            if (f.email) {
+                if (!f.email.trim()) {
+                    nuevosErrores.email = "El correo es requerido";
+                } else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(f.email)) {
+                    nuevosErrores.email = "Correo electrónico inválido";
+                }
+            }
+
+            if (f.username && !f.username.trim()) {
+                nuevosErrores.username = "El usuario es requerido";
+            }
+
+            // Validación de contraseña solo si se proporciona
+            if (f.password && f.password.length > 0) {
+                if (f.password.length < 5) {
+                    nuevosErrores.password = "Mínimo 5 caracteres";
+                }
+                if (!/[A-Z]/.test(f.password)) {
+                    nuevosErrores.password = (nuevosErrores.password ? nuevosErrores.password + ", " : "") + "1 mayúscula";
+                }
+                if (!/\d/.test(f.password)) {
+                    nuevosErrores.password = (nuevosErrores.password ? nuevosErrores.password + ", " : "") + "1 número";
+                }
+                if (!/[!@#$%^&*(),.?":{}|<>]/.test(f.password)) {
+                    nuevosErrores.password = (nuevosErrores.password ? nuevosErrores.password + ", " : "") + "1 caracter especial";
+                }
+            }
         }
 
-        // Debe haber al menos un cambio
+        if (opcion === "curso") {
+            const f = form as FormCurso;
+            if (!f.nombre?.trim()) {
+                nuevosErrores.nombre = "El nombre del curso es requerido";
+            }
+        }
+
         if (seleccionado && Object.keys(form).length <= 1) {
-            nuevosErrores.general = "Debes editar al menos un campo.";
+            nuevosErrores.general = "Debes editar al menos un campo";
         }
 
         setErrors(nuevosErrores);
         return Object.keys(nuevosErrores).length === 0;
     };
 
-    // Envía los formularios según la opción
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
@@ -163,21 +202,21 @@ export default function AdminActualizar() {
             return;
         }
 
-        let url = "";
-        let body = {};
-
-        if (opcion === "docente") {
-            url = `http://localhost:5000/api/admin/actualizar-docente/${(form as FormUsuario).id}`;
-            body = form;
-        } else if (opcion === "estudiante") {
-            url = `http://localhost:5000/api/admin/actualizar-estudiante/${(form as FormUsuario).id}`;
-            body = form;
-        } else if (opcion === "curso") {
-            url = `http://localhost:5000/api/admin/actualizar-curso/${(form as FormCurso).id}`;
-            body = { nombre: (form as FormCurso).nombre };
-        }
-
         try {
+            let url = "";
+            let body = {};
+
+            if (opcion === "docente") {
+                url = `http://localhost:5000/api/admin/actualizar-docente/${(form as FormUsuario).id}`;
+                body = form;
+            } else if (opcion === "estudiante") {
+                url = `http://localhost:5000/api/admin/actualizar-estudiante/${(form as FormUsuario).id}`;
+                body = form;
+            } else if (opcion === "curso") {
+                url = `http://localhost:5000/api/admin/actualizar-curso/${(form as FormCurso).id}`;
+                body = { nombre: (form as FormCurso).nombre };
+            }
+
             const res = await fetch(url, {
                 method: "POST",
                 headers: {
@@ -186,82 +225,98 @@ export default function AdminActualizar() {
                 },
                 body: JSON.stringify(body),
             });
+
             const data = await res.json();
             setLoading(false);
-            if (res.status === 200) {
+
+            if (res.ok) {
                 toast.success("Actualización exitosa");
                 setErrors({});
-                // Actualizar listas tras éxito (opcional, puedes quitar si no quieres refetch inmediato)
+
+                // Actualizar listas
                 if (opcion === "docente") {
                     setListaDocentes((prev) =>
-                        prev.map((d) => (d.id === (form as FormUsuario).id
-                            ? { ...d, ...form }
-                            : d
-                        ))
+                        prev.map((d) => (d.id === (form as FormUsuario).id ? { ...d, ...form } : d))
                     );
-                }
-                if (opcion === "estudiante") {
+                } else if (opcion === "estudiante") {
                     setListaEstudiantes((prev) =>
-                        prev.map((e) => (e.id === (form as FormUsuario).id
-                            ? { ...e, ...form }
-                            : e
-                        ))
+                        prev.map((e) => (e.id === (form as FormUsuario).id ? { ...e, ...form } : e))
                     );
-                }
-                if (opcion === "curso") {
+                } else if (opcion === "curso") {
                     setListaCursos((prev) =>
-                        prev.map((c) => (c.id === (form as FormCurso).id
-                            ? { ...c, ...form }
-                            : c
-                        ))
+                        prev.map((c) => (c.id === (form as FormCurso).id ? { ...c, ...form } : c))
                     );
                 }
             } else {
-                // Manejo de errores personalizados
-                if (data.error?.toLowerCase().includes("username")) {
-                    setErrors(prev => ({ ...prev, username: "El usuario ya existe" }));
-                }
-                if (data.error?.toLowerCase().includes("email")) {
-                    setErrors(prev => ({ ...prev, email: "El correo ya existe" }));
-                }
-                if (data.error?.toLowerCase().includes("nombre")) {
-                    setErrors(prev => ({ ...prev, nombre: "Realiza un cambio" }));
-                }
-                if (data.error?.toLowerCase().includes("contraseña")) {
-                    setErrors(prev => ({ ...prev, password: data.error }));
-                }
-                if (!data.error && !data.msg) {
-                    toast.error("Error desconocido. Intenta de nuevo.");
+                // Manejo mejorado de errores del backend
+                if (data.errors) {
+                    // Si el backend envía errores estructurados
+                    setErrors(data.errors);
+
+                    // Mostrar cada error en un toast
+                    Object.entries(data.errors).forEach(([message]) => {
+                        toast.error(` ${message}`, {
+                            position: "top-right",
+                            autoClose: 5000,
+                        });
+                    });
+                } else if (data.error) {
+                    // Manejo de errores generales
+                    if (data.error.toLowerCase().includes("username")) {
+                        setErrors({ username: "El nombre de usuario ya existe" });
+                        toast.error(" El nombre de usuario ya existe", {
+                            position: "top-right",
+                        });
+                    } else if (data.error.toLowerCase().includes("email")) {
+                        setErrors({ email: "El correo electrónico ya existe" });
+                        toast.error(" El correo electrónico ya existe", {
+                            position: "top-right",
+                        });
+                    } else if (data.error.toLowerCase().includes("nombre")) {
+                        setErrors({ nombre: "El nombre del curso ya existe" });
+                        toast.error(" El nombre del curso ya existe", {
+                            position: "top-right",
+                        });
+                    } else {
+                        toast.error(` ${data.error}`, {
+                            position: "top-right",
+                        });
+                    }
                 } else {
-                    toast.error(data.error || data.msg);
+                    toast.error(" Error desconocido al actualizar", {
+                        position: "top-right",
+                    });
                 }
             }
         } catch {
             setLoading(false);
-            toast.error("Error de conexión con el backend.");
+            toast.error(" Error de conexión con el servidor", {
+                position: "top-right",
+            });
         }
     };
 
-    // ------ OPCIONAL / EXTRA: RENDER DE OPCIONES POR FUNCIÓN ---------
-    function renderOptions() {
+    const renderOptions = () => {
         if (opcion === "curso") {
-            return listaCursos.map((c) =>
-                <option key={c.id} value={c.id}>{c.nombre}</option>
-            );
+            return listaCursos.map((c) => (
+                <option key={c.id} value={c.id}>
+                    {c.nombre}
+                </option>
+            ));
         } else if (opcion === "docente") {
-            return listaDocentes.map((d) =>
+            return listaDocentes.map((d) => (
                 <option key={d.id} value={d.id}>
                     {d.first_name} {d.last_name} ({d.username})
                 </option>
-            );
+            ));
         } else {
-            return listaEstudiantes.map((e) =>
+            return listaEstudiantes.map((e) => (
                 <option key={e.id} value={e.id}>
                     {e.first_name} {e.last_name} ({e.username})
                 </option>
-            );
+            ));
         }
-    }
+    };
 
     const handleTabChange = (tab: Opcion) => {
         setOpcion(tab);
@@ -270,204 +325,300 @@ export default function AdminActualizar() {
         setErrors({});
     };
 
-    const handleLogout = () => {
-        navigate('/login');
-    };
-
     return (
-        <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-100 to-white dark:from-gray-800 dark:to-gray-900">
-            <Header onLogout={handleLogout} />
+        <div
+            className={`min-h-screen flex flex-col  ${isDarkMode ? 'bg-gradient-to-b from-black via-blue-400 to-white' : "bg-gray-50 text-gray-800"
+                }`}
+        >
+            <Header onLogout={() => navigate("/login")} />
 
-            {/* Botón de regresar */}
-            <button
-                className="mt-24 absolute top-6 left-6 z-40 bg-blue-700 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-800 transition font-semibold"
-                onClick={() => navigate("/panel-admin")}
-                style={{ minWidth: 110 }}
-            >
-                ← Volver
-            </button>
+            <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-8 mb-12">
+                <button
+                    onClick={() => navigate("/panel-admin")}
+                    className={`mb-6 flex items-center px-4 py-2 rounded-3xl font-medium transition-colors ${isDarkMode
+                        ? "bg-blue-700 hover:bg-blue-600 text-white"
+                        : "bg-blue-100 hover:bg-blue-200 text-blue-800"
+                        }`}
+                >
+                    <svg
+                        className="w-5 h-5 mr-2"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                        />
+                    </svg>
+                    Volver
+                </button>
 
-            <main className="flex-1 flex flex-col items-center justify-center px-2">
-                <div className="w-full max-w-2xl p-8 bg-white rounded-3xl shadow-xl mt-16 mb-10">
-                    <h1 className="text-3xl md:text-4xl font-bold text-center text-blue-800 mb-8">
-                        Actualizar Información
-                    </h1>
-                    {/* Tabs */}
-                    <div className="flex justify-center gap-4 mb-8">
-                        <button
-                            className={`px-6 py-2 rounded-full font-semibold transition ${opcion === "docente"
-                                ? "bg-blue-600 text-white scale-110"
-                                : "bg-blue-100 text-blue-700 hover:bg-blue-300"
+                {/* Contenedor para el formulario */}
+                <div
+                    className={`max-w-4xl mx-auto rounded-3xl shadow-lg overflow-hidden ${isDarkMode
+                        ? "bg-transparent shadow-gray-200"
+                        : "bg-white shadow-blue-400"
+                        }`}
+                >
+                    <div
+                        className={`p-6 shadow-lg ${isDarkMode ? "bg-gradient-to-br from-blue-400 via-white to-blue-400 shadow-blue-400" : "bg-gradient-to-br from-blue-300 via-white to-blue-300 shadow-blue-200"}`}
+                    >
+                        <h1
+                            className={`text-2xl md:text-3xl font-bold text-center ${isDarkMode ? "text-blue-800" : "text-blue-800"
                                 }`}
-                            onClick={() => handleTabChange("docente")}
                         >
-                            Docente
-                        </button>
-                        <button
-                            className={`px-6 py-2 rounded-full font-semibold transition ${opcion === "estudiante"
-                                ? "bg-blue-600 text-white scale-110"
-                                : "bg-blue-100 text-blue-700 hover:bg-blue-300"
-                                }`}
-                            onClick={() => handleTabChange("estudiante")}
-                        >
-                            Estudiante
-                        </button>
-                        <button
-                            className={`px-6 py-2 rounded-full font-semibold transition ${opcion === "curso"
-                                ? "bg-blue-600 text-white scale-110"
-                                : "bg-blue-100 text-blue-700 hover:bg-blue-300"
-                                }`}
-                            onClick={() => handleTabChange("curso")}
-                        >
-                            Curso
-                        </button>
+                            Actualizar Información
+                        </h1>
                     </div>
 
-                    {/* Selector de elemento */}
-                    <div className="mb-6">
-                        <select
-                            value={seleccionado}
-                            onChange={e => {
-                                const value = Number(e.target.value);
-                                setSeleccionado(value);
+                    <div className="p-6">
+                        <div className="flex flex-wrap justify-center gap-2 mb-8">
+                            {(["docente", "estudiante", "curso"] as Opcion[]).map((tab) => (
+                                <button
+                                    key={tab}
+                                    onClick={() => handleTabChange(tab)}
+                                    className={`px-4 py-2 rounded-full font-medium transition-all border ${opcion === tab
+                                        ? isDarkMode
+                                            ? "bg-blue-700 text-white shadow-md border-blue-900"
+                                            : "bg-blue-400 text-blue-800 shadow-md border-blue-400"
+                                        : isDarkMode
+                                            ? "bg-gray-700 text-gray-300 hover:bg-gray-600 border-gray-600"
+                                            : "bg-gray-100 text-blue-600 hover:bg-gray-200 border-blue-400"
+                                        }`}
+                                >
+                                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                                </button>
+                            ))}
+                        </div>
 
-                                // Asegúrate que el form siempre tenga el id correcto
-                                if (opcion === "curso") {
-                                    const cursoSel = listaCursos.find((c) => c.id === value);
-                                    if (cursoSel) setForm({ id: cursoSel.id, nombre: cursoSel.nombre });
-                                } else if (opcion === "docente") {
-                                    const docenteSel = listaDocentes.find((d) => d.id === value);
-                                    if (docenteSel) setForm({
-                                        id: docenteSel.id,
-                                        first_name: docenteSel.first_name,
-                                        last_name: docenteSel.last_name,
-                                        username: docenteSel.username,
-                                        email: docenteSel.email,
-                                    });
-                                } else if (opcion === "estudiante") {
-                                    const estudianteSel = listaEstudiantes.find((e) => e.id === value);
-                                    if (estudianteSel) setForm({
-                                        id: estudianteSel.id,
-                                        first_name: estudianteSel.first_name,
-                                        last_name: estudianteSel.last_name,
-                                        username: estudianteSel.username,
-                                        email: estudianteSel.email,
-                                    });
+                        <div className="mb-6">
+                            <select
+                                value={seleccionado}
+                                onChange={(e) =>
+                                    setSeleccionado(
+                                        e.target.value ? Number(e.target.value) : ""
+                                    )
                                 }
-                                setErrors({});
-                            }}
-                            className="w-full px-4 py-2 border rounded-lg"
-                        >
-                            <option value="">Selecciona {opcion}</option>
-                            {renderOptions()}
-                        </select>
-
-                    </div>
-
-                    {/* Formulario de actualización */}
-                    {seleccionado && (
-                        <form onSubmit={handleSubmit} className="flex flex-col gap-5 items-center w-full">
-                            {/* DOCENTE/ESTUDIANTE */}
-                            {(opcion === "docente" || opcion === "estudiante") && (
-                                <>
-                                    <div className="w-full">
-                                        <input
-                                            type="text"
-                                            name="first_name"
-                                            placeholder="Nombres"
-                                            value={(form as FormUsuario).first_name || ""}
-                                            onChange={handleInput}
-                                            className={`w-full px-4 py-2 border rounded-lg ${errors.first_name ? "border-red-500" : ""}`}
-                                        />
-                                        {errors.first_name && <span className="text-red-600 text-sm">{errors.first_name}</span>}
-                                    </div>
-                                    <div className="w-full">
-                                        <input
-                                            type="text"
-                                            name="last_name"
-                                            placeholder="Apellidos"
-                                            value={(form as FormUsuario).last_name || ""}
-                                            onChange={handleInput}
-                                            className={`w-full px-4 py-2 border rounded-lg ${errors.last_name ? "border-red-500" : ""}`}
-                                        />
-                                        {errors.last_name && <span className="text-red-600 text-sm">{errors.last_name}</span>}
-                                    </div>
-                                    <div className="w-full">
-                                        <input
-                                            type="text"
-                                            name="username"
-                                            placeholder="Usuario"
-                                            value={(form as FormUsuario).username || ""}
-                                            onChange={handleInput}
-                                            className={`w-full px-4 py-2 border rounded-lg ${errors.username ? "border-red-500" : ""}`}
-                                        />
-                                        {errors.username && <span className="text-red-600 text-sm">{errors.username}</span>}
-                                    </div>
-                                    <div className="w-full">
-                                        <input
-                                            type="email"
-                                            name="email"
-                                            placeholder="Correo electrónico"
-                                            value={(form as FormUsuario).email || ""}
-                                            onChange={handleInput}
-                                            className={`w-full px-4 py-2 border rounded-lg ${errors.email ? "border-red-500" : ""}`}
-                                        />
-                                        {errors.email && <span className="text-red-600 text-sm">{errors.email}</span>}
-                                    </div>
-                                    <div className="w-full">
-                                        <input
-                                            type="password"
-                                            name="password"
-                                            placeholder="Contraseña (opcional)"
-                                            value={(form as FormUsuario).password || ""}
-                                            onChange={handleInput}
-                                            className={`w-full px-4 py-2 border rounded-lg ${errors.password ? "border-red-500" : ""}`}
-                                            autoComplete="new-password"
-                                        />
-                                        {errors.password && <span className="text-red-600 text-sm">{errors.password}</span>}
-                                    </div>
-                                </>
-                            )}
-
-                            {/* CURSO */}
-                            {opcion === "curso" && (
-                                <div className="w-full">
-                                    <input
-                                        type="text"
-                                        name="nombre"
-                                        placeholder="Nombre del curso"
-                                        value={(form as FormCurso).nombre || ""}
-                                        onChange={handleInput}
-                                        className={`w-full px-4 py-2 border rounded-lg ${errors.nombre ? "border-red-500" : ""}`}
-                                    />
-                                    {errors.nombre && (
-                                        <span className="text-red-600 text-sm">{errors.nombre}</span>
-                                    )}
-                                </div>
-                            )}
-
-                            {/* Mensaje general */}
-                            {errors.general && (
-                                <span className="text-red-600 text-sm">{errors.general}</span>
-                            )}
-
-                            <button
-                                type="submit"
-                                className={`w-full px-6 py-3 rounded-lg font-semibold transition ${loading
-                                    ? "bg-gray-400 cursor-not-allowed"
-                                    : "bg-blue-600 text-white hover:bg-blue-800"
+                                className={`w-full p-3 rounded-3xl border ${isDarkMode
+                                    ? "bg-gray-700 border-gray-600 text-white"
+                                    : "bg-white border-gray-300 text-gray-800"
                                     }`}
-                                disabled={loading}
                             >
-                                {loading
-                                    ? "Procesando..."
-                                    : "Actualizar"}
-                            </button>
-                        </form>
-                    )}
+                                <option value="">Selecciona {opcion}</option>
+                                {renderOptions()}
+                            </select>
+                        </div>
+
+                        {seleccionado && (
+                            <form onSubmit={handleSubmit} className="space-y-4">
+                                {(opcion === "docente" || opcion === "estudiante") && (
+                                    <>
+                                        {["first_name", "last_name", "username", "email"].map((field) => (
+                                            <div key={field} className="mb-4">
+                                                <label htmlFor={field} className={`block text-sm font-medium mb-1 ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>
+                                                    {field === "first_name" ? "Nombres" :
+                                                        field === "last_name" ? "Apellidos" :
+                                                            field === "username" ? "Usuario" : "Correo electrónico"}
+                                                </label>
+                                                <input
+                                                    type={field === "email" ? "email" : "text"}
+                                                    id={field}
+                                                    name={field}
+                                                    value={(form as FormUsuario)[field as keyof FormUsuario] || ""}
+                                                    onChange={handleInput}
+                                                    className={`w-full p-3 rounded-lg border-2 ${errors[field]
+                                                        ? "border-red-500 bg-red-50"
+                                                        : isDarkMode
+                                                            ? "bg-gray-700 border-gray-600 focus:border-blue-500"
+                                                            : "bg-white border-gray-300 focus:border-blue-500"
+                                                        }`}
+                                                    autoComplete="off"
+                                                />
+                                                {errors[field] && (
+                                                    <p className="mt-1 text-sm text-red-500 flex items-center">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                                        </svg>
+                                                        {errors[field]}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        ))}
+
+
+                                        <div className="mb-4">
+                                            <label htmlFor="password" className={`block text-sm font-medium mb-1 ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>
+                                                Nueva contraseña
+                                            </label>
+                                            <div className="relative">
+                                                <input
+                                                    type={showPassword ? "text" : "password"}
+                                                    id="password"
+                                                    name="password"
+                                                    value={(form as FormUsuario).password || ""}
+                                                    onChange={handleInput}
+                                                    className={`w-full p-3 rounded-lg border-2 pr-10 ${errors.password
+                                                        ? "border-red-500 bg-red-50"
+                                                        : isDarkMode
+                                                            ? "bg-gray-700 border-gray-600 focus:border-blue-500"
+                                                            : "bg-white border-gray-300 focus:border-blue-500"
+                                                        }`}
+                                                    autoComplete="new-password"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                                                    onClick={() => setShowPassword(!showPassword)}
+                                                    aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                                                >
+                                                    {showPassword ? (
+                                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
+                                                            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                                                            <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                                                        </svg>
+                                                    ) : (
+                                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
+                                                            <path fillRule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clipRule="evenodd" />
+                                                            <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
+                                                        </svg>
+                                                    )}
+                                                </button>
+                                            </div>
+                                            {errors.password && (
+                                                <p className="mt-1 text-sm text-red-500 flex items-center">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                                    </svg>
+                                                    {errors.password}
+                                                </p>
+                                            )}
+
+
+                                            {(form as FormUsuario).password && !errors.password && (
+                                                <div className="text-xs mt-2">
+                                                    <p className={`mb-1 ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>Requisitos de contraseña:</p>
+                                                    <ul className="space-y-1">
+                                                        <li className={`flex items-center ${(form as FormUsuario).password?.length >= 5 ? "text-green-500" : isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
+                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                                                {(form as FormUsuario).password?.length >= 5 ? (
+                                                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                                ) : (
+                                                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                                                )}
+                                                            </svg>
+                                                            Mínimo 5 caracteres
+                                                        </li>
+                                                        <li className={`flex items-center ${/[A-Z]/.test((form as FormUsuario).password || "") ? "text-green-500" : isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
+                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                                                {/[A-Z]/.test((form as FormUsuario).password || "") ? (
+                                                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                                ) : (
+                                                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                                                )}
+                                                            </svg>
+                                                            Al menos 1 mayúscula
+                                                        </li>
+                                                        <li className={`flex items-center ${/\d/.test((form as FormUsuario).password || "") ? "text-green-500" : isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
+                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                                                {/\d/.test((form as FormUsuario).password || "") ? (
+                                                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                                ) : (
+                                                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                                                )}
+                                                            </svg>
+                                                            Al menos 1 número
+                                                        </li>
+                                                        <li className={`flex items-center ${/[!@#$%^&*(),.?":{}|<>]/.test((form as FormUsuario).password || "") ? "text-green-500" : isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
+                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                                                {/[!@#$%^&*(),.?":{}|<>]/.test((form as FormUsuario).password || "") ? (
+                                                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                                ) : (
+                                                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                                                )}
+                                                            </svg>
+                                                            Al menos 1 caracter especial
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </>
+                                )}
+
+                                {opcion === "curso" && (
+                                    <div>
+                                        <input
+                                            type="text"
+                                            name="nombre"
+                                            placeholder="Nombre del curso"
+                                            value={(form as FormCurso).nombre || ""}
+                                            onChange={handleInput}
+                                            className={`w-full p-3 rounded-3xl border ${isDarkMode
+                                                ? "bg-gray-700 border-gray-600 text-white"
+                                                : "bg-white border-gray-300 text-gray-800"
+                                                } ${errors.nombre ? "border-red-500" : ""}`}
+                                        />
+                                        {errors.nombre && (
+                                            <p className="mt-1 text-sm text-red-500">
+                                                {errors.nombre}
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
+
+                                {errors.general && (
+                                    <div className="p-3 rounded-3xl bg-red-100 text-red-700">
+                                        {errors.general}
+                                    </div>
+                                )}
+
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className={`w-full p-3 rounded-3xl font-medium transition-colors ${loading
+                                        ? "bg-gray-400 cursor-not-allowed"
+                                        : isDarkMode
+                                            ? "bg-blue-600 hover:bg-blue-700 text-white"
+                                            : "bg-blue-500 hover:bg-blue-600 text-white"
+                                        }`}
+                                >
+                                    {loading ? (
+                                        <span className="flex items-center justify-center">
+                                            <svg
+                                                className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <circle
+                                                    className="opacity-25"
+                                                    cx="12"
+                                                    cy="12"
+                                                    r="10"
+                                                    stroke="currentColor"
+                                                    strokeWidth="4"
+                                                ></circle>
+                                                <path
+                                                    className="opacity-75"
+                                                    fill="currentColor"
+                                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                                ></path>
+                                            </svg>
+                                            Procesando...
+                                        </span>
+                                    ) : (
+                                        "Actualizar"
+                                    )}
+                                </button>
+                            </form>
+                        )}
+                    </div>
                 </div>
             </main>
-            <ToastContainer />
+
+            {/* Boton Dark mode */}
+            <DarkModeToggle />
             <Footer />
         </div>
     );

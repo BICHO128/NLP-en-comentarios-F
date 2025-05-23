@@ -1,21 +1,41 @@
 import { useState, useEffect } from "react";
-import Header from "../components/shared/Header";
-import Footer from "../components/shared/Footer";
 import { useNavigate } from "react-router-dom";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import { FaTrash } from "react-icons/fa";
 import "react-toastify/dist/ReactToastify.css";
 import { useAuthStore } from "../stores/Autenticacion";
+import { useDarkMode } from '../hooks/useDarkMode';
+import Header from "../components/shared/Header";
+import Footer from "../components/shared/Footer";
+import DarkModeToggle from "../components/shared/DarkModeToggle";
 
-interface Docente { id: number; first_name: string; last_name: string; username: string; email: string; }
-interface Estudiante { id: number; first_name: string; last_name: string; username: string; email: string; }
-interface Curso { id: number; nombre: string; }
+interface Docente {
+    id: number;
+    first_name: string;
+    last_name: string;
+    username: string;
+    email: string;
+}
+
+interface Estudiante {
+    id: number;
+    first_name: string;
+    last_name: string;
+    username: string;
+    email: string;
+}
+
+interface Curso {
+    id: number;
+    nombre: string;
+}
 
 type Opcion = "docente" | "estudiante" | "curso";
 
 export default function AdminEliminar() {
     const navigate = useNavigate();
     const { token } = useAuthStore();
+    const { isDarkMode } = useDarkMode();
 
     const [opcion, setOpcion] = useState<Opcion>("docente");
     const [listaDocentes, setListaDocentes] = useState<Docente[]>([]);
@@ -26,30 +46,45 @@ export default function AdminEliminar() {
 
     // Carga de datos según la opción
     useEffect(() => {
-        if (opcion === "docente") {
-            fetch("http://localhost:5000/api/admin/listar-docentes")
-                .then(r => r.json()).then(setListaDocentes);
-        } else if (opcion === "estudiante") {
-            fetch("http://localhost:5000/api/admin/listar-estudiantes")
-                .then(r => r.json()).then(setListaEstudiantes);
-        } else if (opcion === "curso") {
-            fetch("http://localhost:5000/api/admin/listar-cursos")
-                .then(r => r.json()).then(setListaCursos);
-        }
-        setSeleccionados([]);
+        const cargarDatos = async () => {
+            try {
+                let url = "";
+                if (opcion === "docente") {
+                    url = "http://localhost:5000/api/admin/listar-docentes";
+                } else if (opcion === "estudiante") {
+                    url = "http://localhost:5000/api/admin/listar-estudiantes";
+                } else if (opcion === "curso") {
+                    url = "http://localhost:5000/api/admin/listar-cursos";
+                }
+
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (opcion === "docente") {
+                    setListaDocentes(data);
+                } else if (opcion === "estudiante") {
+                    setListaEstudiantes(data);
+                } else if (opcion === "curso") {
+                    setListaCursos(data);
+                }
+
+                setSeleccionados([]);
+            } catch {
+                toast.error("Error al cargar los datos");
+            }
+        };
+
+        cargarDatos();
     }, [opcion]);
 
-    // Eliminar uno del array seleccionado
     function quitarSeleccionado(id: number) {
         setSeleccionados(seleccionados => seleccionados.filter(s => s !== id));
     }
 
-    // Añadir uno si se hace click al icono
     function agregarSeleccionado(id: number) {
         setSeleccionados(seleccionados => [...seleccionados, id]);
     }
 
-    // Botón eliminar (envía todos los seleccionados)
     async function handleEliminar() {
         if (seleccionados.length === 0) {
             toast.error("Selecciona al menos uno para eliminar");
@@ -80,20 +115,23 @@ export default function AdminEliminar() {
             }
         }
         setLoading(false);
-        // Actualizar la lista sin los eliminados
+
         if (opcion === "docente") setListaDocentes(prev => prev.filter(d => !seleccionados.includes(d.id)));
         if (opcion === "estudiante") setListaEstudiantes(prev => prev.filter(e => !seleccionados.includes(e.id)));
         if (opcion === "curso") setListaCursos(prev => prev.filter(c => !seleccionados.includes(c.id)));
+
         setSeleccionados([]);
         if (exitos > 0) toast.success(`Eliminado(s) correctamente`);
     }
 
-    // Renderiza la lista correspondiente con icono papelera
     function renderLista() {
         const icono = (id: number) =>
             seleccionados.includes(id) ? (
                 <button
-                    className="bg-red-500 hover:bg-red-700 text-white p-3 rounded shadow transition ml-2"
+                    className={`p-2 rounded-full shadow transition ml-2 ${isDarkMode
+                        ? "bg-red-600 hover:bg-red-700 text-white"
+                        : "bg-red-500 hover:bg-red-600 text-white"
+                        }`}
                     onClick={() => quitarSeleccionado(id)}
                     title="Quitar de la lista de eliminación"
                 >
@@ -101,7 +139,10 @@ export default function AdminEliminar() {
                 </button>
             ) : (
                 <button
-                    className="bg-gray-300 hover:bg-red-500 text-white p-3 rounded shadow transition ml-2"
+                    className={`p-2 rounded-full shadow transition ml-2 ${isDarkMode
+                        ? "bg-gray-600 hover:bg-red-600 text-gray-300"
+                        : "bg-gray-200 hover:text-red-500 text-gray-700"
+                        }`}
                     onClick={() => agregarSeleccionado(id)}
                     title="Seleccionar para eliminar"
                 >
@@ -109,33 +150,43 @@ export default function AdminEliminar() {
                 </button>
             );
 
-        if (opcion === "docente") {
-            return listaDocentes.map((d) => (
-                <div key={d.id} className="flex justify-between items-center border-b py-4">
-                    <div>
-                        <span className="font-semibold">{d.first_name} {d.last_name}</span> <span className="text-gray-600">({d.username})</span>
-                    </div>
-                    {icono(d.id)}
-                </div>
-            ));
-        }
-        if (opcion === "estudiante") {
-            return listaEstudiantes.map((e) => (
-                <div key={e.id} className="flex justify-between items-center border-b py-4">
-                    <div>
-                        <span className="font-semibold">{e.first_name} {e.last_name}</span> <span className="text-gray-600">({e.username})</span>
-                    </div>
-                    {icono(e.id)}
-                </div>
-            ));
-        }
-        // CURSOS
-        return listaCursos.map((c) => (
-            <div key={c.id} className="flex justify-between items-center border-b py-4">
+        const listaRender = opcion === "docente"
+            ? listaDocentes
+            : opcion === "estudiante"
+                ? listaEstudiantes
+                : listaCursos;
+
+        return listaRender.map((item) => (
+            <div
+                key={item.id}
+                className={`flex justify-between items-center p-4 rounded-3xl mb-2 transition ${isDarkMode
+                    ? "bg-gray-700 hover:bg-gray-600"
+                    : "bg-gray-100 hover:bg-gray-200"
+                    }`}
+            >
                 <div>
-                    <span className="font-semibold">{c.nombre}</span>
+                    {opcion === "curso" ? (
+                        <span className={`font-semibold ${isDarkMode ? "text-white" : "text-black"
+                            }`}>{(item as Curso).nombre}</span>
+                    ) : (
+                        <>
+                            <span
+                                className={`font-semibold ${isDarkMode ? "text-white" : "text-black"
+                                    }`}
+                            >
+                                {(item as Docente | Estudiante).first_name}{" "}
+                                {(item as Docente | Estudiante).last_name}
+                            </span>
+                            <span
+                                className={`ml-2 ${isDarkMode ? "text-gray-400" : "text-gray-500"
+                                    }`}
+                            >
+                                ({(item as Docente | Estudiante).username})
+                            </span>
+                        </>
+                    )}
                 </div>
-                {icono(c.id)}
+                {icono(item.id)}
             </div>
         ));
     }
@@ -145,72 +196,126 @@ export default function AdminEliminar() {
         setSeleccionados([]);
     };
 
-    const handleLogout = () => navigate("/login");
-
     return (
-        <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-100 to-white dark:from-gray-800 dark:to-gray-900">
-            <Header onLogout={handleLogout} />
-            <button
-                className="mt-24 absolute top-6 left-6 z-40 bg-blue-700 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-800 transition font-semibold"
-                onClick={() => navigate("/panel-admin")}
-                style={{ minWidth: 110 }}
-            >
-                ← Volver
-            </button>
-            <main className="flex-1 flex flex-col items-center justify-center px-2">
-                <div className="w-full max-w-2xl p-8 bg-white rounded-3xl shadow-xl mt-16 mb-10">
-                    <h1 className="text-3xl md:text-4xl font-bold text-center text-blue-800 mb-8">
-                        Eliminar Usuarios o Cursos
-                    </h1>
-                    {/* Tabs */}
-                    <div className="flex justify-center gap-4 mb-8">
-                        <button
-                            className={`px-6 py-2 rounded-full font-semibold transition ${opcion === "docente"
-                                ? "bg-blue-600 text-white scale-110"
-                                : "bg-blue-100 text-blue-700 hover:bg-blue-300"
-                                }`}
-                            onClick={() => handleTabChange("docente")}
-                        >
-                            Docente
-                        </button>
-                        <button
-                            className={`px-6 py-2 rounded-full font-semibold transition ${opcion === "estudiante"
-                                ? "bg-blue-600 text-white scale-110"
-                                : "bg-blue-100 text-blue-700 hover:bg-blue-300"
-                                }`}
-                            onClick={() => handleTabChange("estudiante")}
-                        >
-                            Estudiante
-                        </button>
-                        <button
-                            className={`px-6 py-2 rounded-full font-semibold transition ${opcion === "curso"
-                                ? "bg-blue-600 text-white scale-110"
-                                : "bg-blue-100 text-blue-700 hover:bg-blue-300"
-                                }`}
-                            onClick={() => handleTabChange("curso")}
-                        >
-                            Curso
-                        </button>
-                    </div>
-                    {/* LISTADO */}
-                    <div className="mb-6">
-                        {renderLista()}
-                    </div>
-                    {/* Botón Eliminar */}
-                    <button
-                        type="button"
-                        className={`w-full px-6 py-3 rounded-lg font-semibold transition ${loading
-                            ? "bg-gray-400 cursor-not-allowed"
-                            : "bg-red-600 text-white hover:bg-red-800"
-                            }`}
-                        disabled={loading || seleccionados.length === 0}
-                        onClick={handleEliminar}
+        <div
+            className={`min-h-screen flex flex-col ${isDarkMode
+                ? "bg-gradient-to-b from-black via-blue-400 to-white"
+                : "bg-white"
+                }`}
+        >
+            <Header onLogout={() => navigate("/login")} />
+
+            <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-8 mb-12">
+                <button
+                    onClick={() => navigate("/panel-admin")}
+                    className={`mb-6 flex items-center px-4 py-2 rounded-3xl font-medium transition-colors ${isDarkMode
+                        ? "bg-blue-700 hover:bg-blue-600 text-white"
+                        : "bg-blue-100 hover:bg-blue-200 text-blue-800"
+                        }`}
+                >
+                    <svg
+                        className="w-5 h-5 mr-2"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
                     >
-                        {loading ? "Eliminando..." : "Eliminar seleccionados"}
-                    </button>
+                        <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                        />
+                    </svg>
+                    Volver
+                </button>
+
+                <div
+                    className={`max-w-4xl mx-auto rounded-3xl shadow-lg overflow-hidden ${isDarkMode
+                        ? "bg-transparent shadow-gray-200"
+                        : "bg-transparent shadow-blue-400"
+                        }`}
+                >
+                    <div
+                        className={`p-6 shadow-lg ${isDarkMode
+                            ? "bg-gradient-to-br from-blue-400 via-white to-blue-400 shadow-blue-400"
+                            : "bg-gradient-to-br from-blue-300 via-white to-blue-300 shadow-blue-200"
+                            }`}
+                    >
+                        <h1
+                            className={`text-2xl md:text-3xl font-bold text-center ${isDarkMode ? "text-blue-800" : "text-blue-800"
+                                }`}
+                        >
+                            Eliminar Usuarios o Cursos
+                        </h1>
+                    </div>
+
+                    <div className="p-6">
+                        <div className="flex flex-wrap justify-center gap-2 mb-8">
+                            {(["docente", "estudiante", "curso"] as Opcion[]).map((tab) => (
+                                <button
+                                    key={tab}
+                                    onClick={() => handleTabChange(tab)}
+                                    className={`px-4 py-2 rounded-full font-medium transition-all border ${opcion === tab
+                                        ? isDarkMode
+                                            ? "bg-blue-700 text-white shadow-md border-blue-900"
+                                            : "bg-blue-400 text-blue-800 shadow-md border-blue-400"
+                                        : isDarkMode
+                                            ? "bg-gray-700 text-gray-300 hover:bg-gray-600 border-gray-600"
+                                            : "bg-gray-100 text-blue-600 hover:bg-gray-200 border-blue-400"
+                                        }`}
+                                >
+                                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="mb-6">{renderLista()}</div>
+
+                        <button
+                            type="button"
+                            className={`w-full p-3 rounded-3xl font-medium transition-colors text-xl border-2 ${loading || seleccionados.length === 0
+                                ? isDarkMode
+                                    ? "bg-gray-800  text-white opacity-25 cursor-not-allowed"
+                                    : "bg-gray-100  text-gray-400 cursor-not-allowed border-blue-200"
+                                : isDarkMode
+                                    ? "bg-red-600 hover:bg-red-700 text-white"
+                                    : "bg-red-500 hover:bg-red-600 text-white"
+                                }`}
+                            disabled={loading || seleccionados.length === 0}
+                            onClick={handleEliminar}
+                        >
+                            {loading ? (
+                                <span className="flex items-center justify-center">
+                                    <svg
+                                        className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <circle
+                                            className="opacity-25"
+                                            cx="12"
+                                            cy="12"
+                                            r="10"
+                                            stroke="currentColor"
+                                            strokeWidth="4"
+                                        ></circle>
+                                        <path
+                                            className="opacity-75"
+                                            fill="currentColor"
+                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                        ></path>
+                                    </svg>
+                                    Eliminando...
+                                </span>
+                            ) : (
+                                `Eliminar seleccionados (${seleccionados.length})`
+                            )}
+                        </button>
+                    </div>
                 </div>
             </main>
-            <ToastContainer />
+
+            <DarkModeToggle />
+
             <Footer />
         </div>
     );

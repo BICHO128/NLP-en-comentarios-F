@@ -18,6 +18,7 @@ import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { useAuthStore } from '../stores/Autenticacion';
 import { useDarkMode } from '../hooks/useDarkMode';
 import 'react-toastify/dist/ReactToastify.css';
+import { ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 
 ChartJS.register(
   CategoryScale,
@@ -139,7 +140,7 @@ export default function Administrador() {
             toastId: 'no-teachers-info' // ID único
           });
         } else {
-          toast.success('Lista de docentes cargada correctamente', {
+          console.log('Lista de docentes cargada correctamente', {
             toastId: 'teachers-loaded-success' // ID único
           });
         }
@@ -172,7 +173,7 @@ export default function Administrador() {
     }
 
     if (!selectedCourse) {
-      toast.warning('Por favor seleccione un curso');
+      // toast.warning('Por favor seleccione un cursosss');
       return;
     }
 
@@ -508,16 +509,22 @@ export default function Administrador() {
 
             <button
               onClick={descargarPDF}
+              disabled={!selectedCourse}
               className={`
-                w-full md:w-auto px-4 py-2 text-xl rounded-3xl font-semibold shadow-lg mt-2 md:mt-8
-                transition-all duration-200
-                hover:shadow-xl focus:shadow-xl
-                ${isDarkMode
-                  ? "bg-red-700 text-white hover:bg-red-800"
-                  : "bg-red-600 text-white hover:bg-red-700"
+            flex items-center text-center justify-center w-full md:w-auto px-6 py-2.5 text-xl rounded-3xl font-semibold shadow-lg mt-2 md:mt-8
+            transition-all duration-200
+            hover:shadow-xl focus:shadow-xl
+            ${!selectedCourse
+                  ? isDarkMode
+                    ? "bg-gray-900 text-gray-100 opacity-20 cursor-not-allowed"
+                    : "bg-gray-900 text-gray-100 opacity-20 cursor-not-allowed"
+                  : isDarkMode
+                    ? "bg-red-700 text-white hover:bg-red-800 shadow-gray-800"
+                    : "bg-red-600 text-white hover:bg-red-700 shadow-gray-500"
                 }
-              `}
+          `}
             >
+              <ArrowDownTrayIcon className="w-7 h-7 mr-2" />
               Descargar PDF
             </button>
           </div>
