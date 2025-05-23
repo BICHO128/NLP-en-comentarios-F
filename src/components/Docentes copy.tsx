@@ -13,7 +13,7 @@ import {
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { useAuthStore } from '../stores/Autenticacion';
 import { useDarkMode } from '../hooks/useDarkMode';
-import { FaSyncAlt } from 'react-icons/fa'; // Importa el ícono de recargar
+// import { FaSyncAlt } from 'react-icons/fa'; // Importa el ícono de recargar
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { ArrowDownTrayIcon } from '@heroicons/react/24/outline';
@@ -66,7 +66,7 @@ export default function Docentes() {
   const [filtroDocente, setFiltroDocente] = useState<'todos' | 'positivo' | 'neutral' | 'negativo'>('todos');
   const [filtroCurso, setFiltroCurso] = useState<'todos' | 'positivo' | 'neutral' | 'negativo'>('todos');
   // Estado para manejar la animación de clic
-  const [isReloading, setIsReloading] = useState(false);
+  // const [isReloading, setIsReloading] = useState(false);
 
   // Carga los cursos del docente autenticado
   // Modificación del useEffect que carga los cursos
@@ -333,52 +333,52 @@ export default function Docentes() {
 
   {/* // Nueva función para recargar los datos */ }
 
-  const handleRecargarDatos = () => {
-    setIsReloading(true); // Activa la animación
-    recargarDatos(); // Llama a la función para recargar los datos
-    setTimeout(() => setIsReloading(false), 1000); // Desactiva la animación después de 1 segundo
-  };
+  // const handleRecargarDatos = () => {
+  //   setIsReloading(true); // Activa la animación
+  //   recargarDatos(); // Llama a la función para recargar los datos
+  //   setTimeout(() => setIsReloading(false), 1000); // Desactiva la animación después de 1 segundo
+  // };
 
-  const recargarDatos = () => {
-    if (!user) return;
+  // const recargarDatos = () => {
+  //   if (!user) return;
 
-    // Recargar cursos
-    fetch(`http://localhost:5000/api/docentes/${user.id}/cursos`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error('Error al cargar cursos');
-        return res.json();
-      })
-      .then((data: Curso[]) => {
-        setCursos(data);
-      })
-      .catch((err) => {
-        console.error('Error al obtener cursos:', err);
-        setCursos([]);
-      });
+  //   // Recargar cursos
+  //   fetch(`http://localhost:5000/api/docentes/${user.id}/cursos`, {
+  //     headers: { Authorization: `Bearer ${token}` },
+  //   })
+  //     .then((res) => {
+  //       if (!res.ok) throw new Error('Error al cargar cursos');
+  //       return res.json();
+  //     })
+  //     .then((data: Curso[]) => {
+  //       setCursos(data);
+  //     })
+  //     .catch((err) => {
+  //       console.error('Error al obtener cursos:', err);
+  //       setCursos([]);
+  //     });
 
-    // // Recargar evaluaciones si hay un curso seleccionado
-    if (selectedCourseId) {
-      fetch(
-        `http://localhost:5000/api/evaluaciones/docente/${user.id}/curso/${selectedCourseId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      )
-        .then((res) => {
-          if (!res.ok) throw new Error('Error al cargar evaluaciones');
-          return res.json();
-        })
-        .then((data: Evaluacion[]) => {
-          setEvaluaciones(data);
-          setMostrarEvaluaciones(true);
-        })
-        .catch((err) => {
-          console.error('Error al obtener evaluaciones:', err);
-          setEvaluaciones([]);
-          setMostrarEvaluaciones(false);
-        });
-    }
-  };
+  //   // // Recargar evaluaciones si hay un curso seleccionado
+  //   if (selectedCourseId) {
+  //     fetch(
+  //       `http://localhost:5000/api/evaluaciones/docente/${user.id}/curso/${selectedCourseId}`,
+  //       { headers: { Authorization: `Bearer ${token}` } }
+  //     )
+  //       .then((res) => {
+  //         if (!res.ok) throw new Error('Error al cargar evaluaciones');
+  //         return res.json();
+  //       })
+  //       .then((data: Evaluacion[]) => {
+  //         setEvaluaciones(data);
+  //         setMostrarEvaluaciones(true);
+  //       })
+  //       .catch((err) => {
+  //         console.error('Error al obtener evaluaciones:', err);
+  //         setEvaluaciones([]);
+  //         setMostrarEvaluaciones(false);
+  //       });
+  //   }
+  // };
 
   return (
     <div className="p-4 space-y-6 rounded-3xl ">
@@ -458,26 +458,6 @@ export default function Docentes() {
         >
           <ArrowDownTrayIcon className="w-7 h-7 mr-2" />
           Descargar PDF
-        </button>
-
-        {/* Botón de recarga para evaluaciones */}
-        <button
-          onClick={handleRecargarDatos}
-          disabled={isReloading}
-          className={`
-            flex items-center justify-center w-full md:w-auto px-3 py-3 text-xl rounded-full font-semibold shadow-lg mt-2 md:mt-8
-            transition-all duration-200
-            hover:shadow-xl focus:shadow-xl
-            ${isReloading
-              ? "bg-gray-400 text-gray-700 cursor-not-allowed"
-              : isDarkMode
-                ? "bg-blue-700 text-white hover:bg-blue-800 shadow-gray-800"
-                : "bg-blue-600 text-white hover:bg-blue-700 shadow-gray-500"
-            }
-          `}
-        >
-          <FaSyncAlt className={`w-6 h-6 ${isReloading ? "animate-spin" : ""}`} />
-          {isReloading ? "Recargando..." : ""}
         </button>
       </div>
 

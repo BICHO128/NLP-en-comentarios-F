@@ -186,7 +186,7 @@ export default function Administrador() {
         return;
       }
 
-      toast.info('Cargando evaluaciones...', { autoClose: 2000 });
+      console.log('Cargando evaluaciones...', { autoClose: 2000 });
 
       const res = await fetch(
         `http://localhost:5000/api/evaluaciones/docente/${docente.docente_id}/curso/${curso.id}`,
@@ -209,7 +209,7 @@ export default function Administrador() {
       } else {
         setEvaluaciones(data);
         setMostrarEvaluaciones(true);
-        toast.success(`Se cargaron ${data.length} evaluaciones`, {
+        console.log(`Se cargaron ${data.length} evaluaciones`, {
           autoClose: 2000
         });
       }
@@ -401,7 +401,7 @@ export default function Administrador() {
       }, 500);
     } catch (error) {
       toast.update(loadingToast, {
-        render: "Error al descargar el informe o no tiene evalaciones",
+        render: "No se pudo descargar el PDF, no tiene evalaciones",
         type: "error",
         isLoading: false,
         autoClose: 3000,

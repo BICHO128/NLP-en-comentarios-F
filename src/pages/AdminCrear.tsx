@@ -193,7 +193,7 @@ export default function AdminCrear() {
             } else {
                 // Manejo de otros errores
                 toast.error(
-                    data.error || " Error al procesar la solicitud",
+                    data.error || " Corrige tus erorres y vuelve a intentarlo",
                     { position: "top-right" }
                 );
             }
